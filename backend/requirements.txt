@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+httpx
+boto3
+langgraph
+langchain-aws
+langchain-openai

@@ -1,0 +1,190 @@
+# =============================================================================
+# Python / FastAPI
+# =============================================================================
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.python-version
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+wheels/
+share/python-wheels/
+*.egg
+MANIFEST
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.coverage.xml
+*.cover
+.hypothesis/
+**/__pycache__/
+
+# Environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pythonenv*
+
+# pyenv
+.pyenv/
+.python-version-*
+
+# Pip
+pip-log.txt
+pip-delete-this-directory.txt
+pip-selfcheck.json
+
+# Poetry
+.poetry/
+poetry.lock
+poetry.toml
+
+# Ruff / mypy / flake8 / isort / black
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.pyc_cache/
+.flake8
+.isort.cfg
+
+# IDE / editor (Python)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Celery / task queues
+celerybeat-schedule
+
+# =============================================================================
+# React / Node.js
+# =============================================================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.pnp.*
+
+# Builds
+dist/
+out/
+build/
+*.tsbuildinfo
+.next/
+.nuxt/
+.astro/
+
+# Testing / coverage (frontend)
+coverage/
+*.lcov
+vitest.config.*.timestamp-*.mjs
+
+# Vite cache
+.vite/
+*.vite
+
+# Yarn v2+/v3+
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Node / npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =============================================================================
+# General
+# =============================================================================
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+logs/
+*.log
+*.log.*
+npm-debug.log
+
+# Runtime / data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Temp / misc
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.vscode-server/
+.tmp/
+
+# Auto-generated
+*.bak
+*.orig
+*.rej
+
+# Caches
+.cache/
+.cache*
+
+# Environment / secrets (catch-all safety)
+*.env
+*.env.*
+!.env.example
+
+# Package lockfiles — uncomment to keep out of version control
+# (for applications, committing these is usually recommended)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# =============================================================================
+# Deployment / Docker
+# =============================================================================
+docker-compose.override.yml
+*.local.yml
+.deploy/
