@@ -1,0 +1,50 @@
+govdata-orchestrator/
+├── .claude
+│   └── settings.local.json
+├── backend
+│   ├── app
+│   │   ├── adapters
+│   │   ├── __init__.py
+│   │   ├── api.py
+│   │   ├── context.py
+│   │   ├── errors.py
+│   │   ├── logging_config.py
+│   │   └── middleware.py
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── models.py
+│   └── requirements.txt
+├── docs
+│   └── roadmap.md
+├── frontend
+│   ├── public
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   ├── src
+│   │   ├── assets
+│   │   │   ├── hero.png
+│   │   │   ├── react.svg
+│   │   │   └── vite.svg
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   └── main.tsx
+│   ├── .gitignore
+│   ├── .oxlintrc.json
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── README.md
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── infra
+├── scripts
+├── .claudeignore
+├── .env.example
+├── .gitattributes
+├── .gitignore
+├── CLAUDE.md
+├── docker-compose.yml
+└── gen_structure.py
