@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 
-from backend.app.adapters.gus import GUSClient, GUSNotFoundError
-from backend.app.adapters.schemas import DataSource
+from app.adapters.gus import GUSClient, GUSNotFoundError
+from app.adapters.schemas import DataSource
 from typing import Any, Dict
 
 @pytest.mark.asyncio

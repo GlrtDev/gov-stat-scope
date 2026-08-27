@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import AsyncMock, patch
 import os
 
-from backend.app.adapters.fred import FredClient, FredNotFoundError
-from backend.app.adapters.schemas import DataSource
+from app.adapters.fred import FredClient, FredNotFoundError
+from app.adapters.schemas import DataSource
 from typing import Any, Dict
 
 @pytest.fixture(autouse=True)

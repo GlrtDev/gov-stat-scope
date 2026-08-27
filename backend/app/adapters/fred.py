@@ -10,9 +10,9 @@ from tenacity import (
     wait_exponential,
 )
 
-from backend.app.adapters.base import DataSourceClient
-from backend.app.adapters.schemas import DataPoint, NormalizedSeries
-from backend.models import DataSource
+from app.adapters.base import DataSourceClient
+from app.adapters.schemas import DataPoint, NormalizedSeries
+from models import DataSource
 
 
 class FredAOError(Exception):

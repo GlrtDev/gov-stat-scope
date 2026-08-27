@@ -1,12 +1,6 @@
-import os
 import pytest
 
-from backend.app.adapters.gus import GUSClient, GUSNotFoundError
-
-pytestmark = pytest.mark.skipif(
-    not os.getenv("GUS_CLIENT_ID"),
-    reason="GUS_CLIENT_ID not set in environment."
-)
+from app.adapters.gus import GUSClient
 
 @pytest.mark.asyncio
 async def test_gus_live_resolve_and_fetch() -> None:

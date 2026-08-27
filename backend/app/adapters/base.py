@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from backend.app.adapters.schemas import NormalizedSeries
+from app.adapters.schemas import NormalizedSeries
 
 
 class DataSourceClient(ABC):

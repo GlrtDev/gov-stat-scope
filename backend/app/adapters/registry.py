@@ -1,7 +1,7 @@
-from backend.app.adapters.base import DataSourceClient
-from backend.app.adapters.fred import FredClient
-from backend.app.adapters.gus import GUSClient
-from backend.models import DataSource
+from app.adapters.base import DataSourceClient
+from app.adapters.fred import FredClient
+from app.adapters.gus import GUSClient
+from models import DataSource
 
 
 def get_adapter(source: DataSource) -> DataSourceClient:

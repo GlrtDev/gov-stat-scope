@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from backend.app.adapters.fred import FredClient
+from app.adapters.fred import FredClient
 
 pytestmark = pytest.mark.skipif(
     not os.getenv("FRED_API_KEY"),

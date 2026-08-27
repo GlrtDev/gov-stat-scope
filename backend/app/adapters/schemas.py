@@ -4,7 +4,7 @@ from typing import List, Union
 
 from pydantic import BaseModel, Field
 
-from backend.models import DataSource
+from models import DataSource
 
 
 class DataPoint(BaseModel):
