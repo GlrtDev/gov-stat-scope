@@ -1,8 +1,14 @@
 version: "3.8"
 
+networks:
+  orchestrator-net:
+    driver: bridge
+
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: overwatch-backend
     ports:
       - "8000:8000"
@@ -12,9 +18,11 @@ services:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
-      - DYNAMODB_ENDPOINT=http://host.docker.internal:8001
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+    networks:
+      - orchestrator-net
+    depends_on:
+      - dynamodb-local
 
   dynamodb-local:
     image: amazon/dynamodb-local:latest
@@ -24,3 +32,23 @@ services:
     command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/home/dynamodblocal/data"]
     volumes:
       - ./infra/dynamodb-data:/home/dynamodblocal/data
+    networks:
+      - orchestrator-net
+
+  test-runner:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: overwatch-test-runner
+    profiles: ["test"]
+    volumes:
+      - ./backend:/app
+    environment:
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - PYTHONPATH=/app
+    networks:
+      - orchestrator-net
+    entrypoint: ["pytest"]
