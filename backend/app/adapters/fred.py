@@ -12,7 +12,7 @@ from tenacity import (
 
 from app.adapters.base import DataSourceClient
 from app.adapters.schemas import DataPoint, NormalizedSeries
-from models import DataSource
+from app.models import DataSource
 
 
 class FredAOError(Exception):

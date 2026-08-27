@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from app.context import get_request_id, get_trace_id
 from app.logging_config import get_logger
-from models import AskRequest, AskResponse
+from app.models import AskRequest, AskResponse
 
 router = APIRouter()
 

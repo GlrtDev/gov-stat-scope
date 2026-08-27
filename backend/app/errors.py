@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.context import get_request_id, get_trace_id
 from app.logging_config import get_logger
-from models import ErrorResponse
+from app.models import ErrorResponse
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:

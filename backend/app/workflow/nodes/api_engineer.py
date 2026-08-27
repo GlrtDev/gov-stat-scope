@@ -1,0 +1,80 @@
+import json
+from typing import Any, Dict
+
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+from pydantic import ValidationError
+
+from app.workflow.llm_factory import get_llm
+from app.workflow.state import OrchestratorState
+from app.workflow.tools import resolve_and_fetch_fred, resolve_and_fetch_gus
+
+
+async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
+    llm = get_llm(temperature=0.0)
+    tools = [resolve_and_fetch_gus, resolve_and_fetch_fred]
+    llm_with_tools = llm.bind_tools(tools)
+    
+    source = state.get("selected_source", "UNKNOWN")
+    system_prompt = (
+        f"You are the API Engineer Agent. The intent router selected '{source}' as the data source. "
+        "Your task is to extract exact parameters from the user's query and execute the corresponding tool. "
+        "If dates or years are not specified, default to the last 5 full years. You must output a tool call."
+    )
+    
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=state["user_query"])
+    ]
+    
+    ai_message: AIMessage = await llm_with_tools.ainvoke(messages)  # type: ignore
+    
+    errors = list(state.get("errors", []))
+    new_messages = [ai_message]
+    normalized_data = None
+    
+    if not ai_message.tool_calls:
+        errors.append("API Engineer failed to generate a tool call.")
+    else:
+        tool_call = ai_message.tool_calls[0]
+        tool_name = tool_call["name"]
+        tool_args = tool_call["args"]
+        
+        tool_map = {
+            "resolve_and_fetch_gus": resolve_and_fetch_gus,
+            "resolve_and_fetch_fred": resolve_and_fetch_fred
+        }
+        
+        selected_tool = tool_map.get(tool_name)
+        
+        if not selected_tool:
+            errors.append(f"Requested tool '{tool_name}' is not available.")
+        else:
+            try:
+                tool_output_str = await selected_tool.ainvoke(tool_args)
+                tool_output_dict = json.loads(tool_output_str)
+                
+                tool_message = ToolMessage(
+                    content=tool_output_str, 
+                    tool_call_id=tool_call["id"]
+                )
+                new_messages.append(tool_message)
+                
+                if "error" in tool_output_dict:
+                    errors.append(tool_output_dict["error"])
+                else:
+                    normalized_data = tool_output_dict
+                    
+            except Exception as e:
+                errors.append(f"Tool execution unhandled exception: {str(e)}")
+
+    return {
+        "messages": new_messages,
+        "normalized_data": normalized_data,
+        "errors": errors
+    }
+
+
+def route_after_api(state: OrchestratorState) -> str:
+    if state.get("normalized_data") and not state.get("errors"):
+        return "analyst"
+    return "error_handler"

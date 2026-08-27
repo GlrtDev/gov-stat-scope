@@ -12,7 +12,7 @@ from tenacity import (
 
 from app.adapters.base import DataSourceClient
 from app.adapters.schemas import DataPoint, NormalizedSeries
-from models import DataSource
+from app.models import DataSource
 
 
 class GUSAOError(Exception):
@@ -117,7 +117,10 @@ class GUSClient(DataSourceClient):
 
     async def fetch_time_range(self, variable_id: str, unit_id: str, year_start: int, year_end: int) -> Dict[str, Any]:
         """Fetches data for a specific unit over a bounded time range."""
-        params: Dict[str, Any] = {"page-size": 100}
+        params: Dict[str, Any] = {
+            "var-id": variable_id,
+            "page-size": 100
+        }
         params["year"] = list(range(year_start, year_end + 1))
         return await self._request("GET", f"data/by-unit/{unit_id}", params=params)
 
