@@ -190,4 +190,6 @@ docker-compose.override.yml
 .deploy/
 gen_structure.py
 project_structure*
+
 /scripts/fix_imports.py
+/docs/roadmap.md
