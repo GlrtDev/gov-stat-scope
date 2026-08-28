@@ -1,4 +1,6 @@
-"""Analyst node executing deterministic math and LLM-driven synthesis."""
+"""Analyst node execution logic and deterministic math helpers."""
+
+from __future__ import annotations
 
 from typing import Any, Dict, List, Sequence
 
@@ -24,14 +26,40 @@ class AnalystOutput(BaseModel):
     )
 
 
-def _calculate_average(values: Sequence[float]) -> float:
-    return sum(values) / len(values) if values else 0.0
+def calculate_percentage_change(old_value: float, new_value: float) -> float:
+    """Calculate percentage change between two values."""
+    if old_value == 0.0:
+        raise ValueError("Base value cannot be zero when computing percentage change.")
+    return ((new_value - old_value) / abs(old_value)) * 100.0
 
 
-def _calculate_min_max(values: Sequence[float]) -> Dict[str, float]:
+def calculate_average(values: Sequence[float]) -> float:
+    """Calculate arithmetic mean of a sequence."""
+    if not values:
+        return 0.0
+    return sum(values) / len(values)
+
+
+def calculate_min_max(values: Sequence[float]) -> Dict[str, float]:
+    """Calculate min, max, and total spread of a sequence."""
     if not values:
         return {"min": 0.0, "max": 0.0, "spread": 0.0}
-    return {"min": min(values), "max": max(values), "spread": max(values) - min(values)}
+    min_val = min(values)
+    max_val = max(values)
+    return {
+        "min": min_val,
+        "max": max_val,
+        "spread": max_val - min_val,
+    }
+
+
+def calculate_cagr(start_value: float, end_value: float, periods: int) -> float:
+    """Calculate Compound Annual Growth Rate across given periods."""
+    if periods <= 0:
+        raise ValueError("Periods must be greater than zero.")
+    if start_value <= 0.0 or end_value <= 0.0:
+        raise ValueError("Values must be positive to compute CAGR.")
+    return ((end_value / start_value) ** (1.0 / periods) - 1.0) * 100.0
 
 
 async def analyst_agent_node(state: OrchestratorState) -> Dict[str, Any]:
@@ -42,15 +70,14 @@ async def analyst_agent_node(state: OrchestratorState) -> Dict[str, Any]:
     normalized_data = state.get("normalized_data", {})
     records = normalized_data.get("values", [])
     
-    # Deterministic Pre-calculation
     numeric_values = [
         float(record["value"]) for record in records if record.get("value") is not None
     ]
     
     deterministic_metrics = {
         "count": len(numeric_values),
-        "average": _calculate_average(numeric_values),
-        "min_max": _calculate_min_max(numeric_values),
+        "average": calculate_average(numeric_values),
+        "min_max": calculate_min_max(numeric_values),
     }
 
     system_prompt = (
@@ -72,7 +99,7 @@ async def analyst_agent_node(state: OrchestratorState) -> Dict[str, Any]:
         HumanMessage(content=human_payload)
     ]
     
-    result: AnalystOutput = await structured_llm.ainvoke(messages) # type: ignore
+    result: AnalystOutput = await structured_llm.ainvoke(messages)  # type: ignore
     
     return {
         "analysis_result": result.model_dump(),
