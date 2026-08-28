@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChatMessage as ChatMessageType } from '../types/api';
+import type { ChatMessage as ChatMessageType } from '../types/api';
 import { SourceBadge } from './SourceBadge';
 
 interface ChatMessageProps {
