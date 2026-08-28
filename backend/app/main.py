@@ -1,31 +1,50 @@
-"""FastAPI entrypoint for the GovData AI Orchestrator.
-
-Phase 1: assembles the FastAPI application from focused building blocks
-rather than defining everything inline:
-
-* ``app.logging_config`` — structured key=value logging
-* ``app.middleware`` — request/trace ID propagation (pure ASGI middleware)
-* ``app.errors`` — global exception handler -> structured JSON errors
-* ``app.api`` — public endpoints (GET /health, POST /ask)
-
-This module only wires those pieces together.
-"""
-
-from __future__ import annotations
+import os
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from app import api, errors, middleware
-from app.logging_config import configure_logging
+from app.routes.sessions import router as sessions_router
+from app.storage.dynamodb_saver import init_dynamodb_tables
 
-configure_logging()
+# Attempt to mount standard API endpoints if they exist
+try:
+    from app.routes import router as api_router
+except ImportError:
+    api_router = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Handles async startup events, ensuring infrastructure dependencies are initialized."""
+    table_name = os.getenv("DYNAMODB_TABLE_NAME", "govdata-sessions")
+    region_name = os.getenv("AWS_REGION", "us-east-1")
+    await init_dynamodb_tables(table_name=table_name, region_name=region_name)
+    yield
+
 
 app = FastAPI(
     title="GovData AI Orchestrator",
-    version="0.1.0",
-    description="Multi-agent orchestrator over GUS and FRED government data.",
+    description="Stateful multi-agent orchestration API for government data sources.",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
-app.add_middleware(middleware.RequestContextMiddleware)
-app.add_exception_handler(Exception, errors.unhandled_exception_handler)
-app.include_router(api.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+if api_router:
+    app.include_router(api_router)
+    
+app.include_router(sessions_router)
+
+
+@app.get("/health")
+async def health_check() -> dict[str, str]:
+    return {"status": "ok"}
