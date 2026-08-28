@@ -194,3 +194,8 @@ project_structure*
 /scripts/fix_imports.py
 /docs/roadmap.md
 CLAUDE.md
+
+
+# Local DynamoDB SQLite data files
+infra/dynamodb-data/
+*.db
