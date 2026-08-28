@@ -7,7 +7,9 @@ GovStatScope is a stateful multi-agent orchestration platform built to query, no
 - **Frontend**: React 18, TypeScript, Vite, TailwindCSS
 - **Backend Core**: Python 3.11+, Async FastAPI, Pydantic v2
 - **AI Orchestration**: LangGraph (Stateful Multi-Agent Workflow)
-- **LLM Provider**: Amazon Bedrock (Claude 3 Haiku) enforcing strict JSON schemas
+- **LLM Provider**: Dynamic multi-provider support enforcing strict JSON schemas:
+  - Production: Amazon Bedrock (Claude 3 Haiku or Gemma4 31B)
+  - Development/Local: OpenAI-compatible endpoints (LM Studio, Ollama, vLLM, LiteLLM)
 - **External Data Adapters**: Asynchronous clients for GUS (Bank Danych Lokalnych) and US FRED APIs
 - **Infrastructure (AWS)**: 
   - ECS Fargate (Container Compute)
