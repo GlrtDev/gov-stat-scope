@@ -13,13 +13,7 @@ from app.models import AskRequest, AskResponse
 from app.rate_limiter import limiter
 from app.workflow.graph import invoke_workflow
 
-router = APIRouter()
-
-
-@router.get("/health")
-def health() -> dict[str, str]:
-    """Liveness probe."""
-    return {"status": "ok"}
+router = APIRouter(tags=["Orchestration"])
 
 
 @router.post("/ask", response_model=AskResponse)
