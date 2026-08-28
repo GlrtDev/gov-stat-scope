@@ -12,12 +12,12 @@ import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
+from app.errors import add_exception_handlers
 from app.logging_config import configure_logging
 from app.middleware import RequestContextMiddleware
-from app.rate_limiter import limiter, rate_limit_error_handler
+from app.rate_limiter import limiter
 from app.routes import router as core_router
 from app.routes.health import router as health_router
 from app.routes.sessions import router as sessions_router
@@ -39,7 +39,17 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             async with asyncio.timeout(self.timeout):
                 return await call_next(request)
         except asyncio.TimeoutError:
-            return JSONResponse(status_code=408, content={"detail": "Request Timeout"})
+            return JSONResponse(
+                status_code=408,
+                content={
+                    "type": "urn:govdata:error:timeout",
+                    "title": "Request Timeout",
+                    "status": 408,
+                    "detail": "The server timed out waiting for the request to complete.",
+                    "instance": str(request.url)
+                },
+                media_type="application/problem+json"
+            )
 
 
 @asynccontextmanager
@@ -80,19 +90,34 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Connections drained. Shutdown complete.")
 
 
+tags_metadata = [
+    {"name": "Orchestration", "description": "LangGraph multi-agent orchestration endpoints."},
+    {"name": "Health", "description": "ECS Liveness and AWS Readiness probes."},
+    {"name": "Sessions", "description": "DynamoDB conversational state retrieval."}
+]
+
 app = FastAPI(
     title="GovStatScope AI Orchestrator",
     description="Stateful multi-agent orchestration API for government data sources.",
     version="1.0.0",
+    contact={"name": "GovData API Team", "url": "https://github.com/GlrtDev/gov-stat-scope"},
+    license_info={"name": "MIT License", "url": "https://opensource.org/licenses/MIT"},
+    openapi_tags=tags_metadata,
+    servers=[
+        {"url": "http://localhost:8000", "description": "Local development environment"},
+        {"url": "https://<YOUR_ALB_DNS_NAME>.elb.amazonaws.com", "description": "Production AWS Environment"}
+    ],
     lifespan=lifespan,
 )
 
+# Apply global exception handlers
+add_exception_handlers(app)
+
+# Middlewares and Router bindings
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, rate_limit_error_handler)
 
 app.add_middleware(TimeoutMiddleware, timeout=30)
 app.add_middleware(RequestContextMiddleware)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -101,7 +126,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Replace the placeholder core_router health check by overriding it
 app.include_router(core_router)
 app.include_router(health_router)
 app.include_router(sessions_router)
