@@ -1,8 +1,10 @@
-"""ASGI middleware that generates and threads request/trace IDs."""
+"""Pure ASGI middleware threading request/trace IDs and logging request metrics."""
 
 from __future__ import annotations
 
+import time
 import uuid
+from typing import Any
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -11,12 +13,7 @@ from app.logging_config import get_logger
 
 
 class RequestContextMiddleware:
-    """Generate and log a request ID and trace ID for every incoming request.
-
-    Implemented as pure ASGI middleware (not BaseHTTPMiddleware) so that
-    exceptions raised downstream still reach the app-level exception handler
-    and are converted into structured JSON errors.
-    """
+    """Pure ASGI middleware calculating request duration and injecting correlation IDs."""
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
@@ -26,34 +23,64 @@ class RequestContextMiddleware:
             await self.app(scope, receive, send)
             return
 
+        start_time = time.perf_counter()
         request_id = _header(scope, "x-request-id") or uuid.uuid4().hex
         trace_id = _header(scope, "x-trace-id") or uuid.uuid4().hex
 
         set_request_context(request_id, trace_id)
 
+        method = scope.get("method", "UNKNOWN")
+        path = scope.get("path", "")
+        client = scope.get("client")
+        client_ip = client[0] if client else "unknown"
+
         get_logger().info(
             "request_started",
-            extra={"method": scope.get("method"), "path": scope.get("path")},
+            extra={
+                "http_method": method,
+                "http_path": path,
+                "client_ip": client_ip,
+            },
         )
 
+        status_code = 500
+
         async def send_wrapper(message: Message) -> None:
+            nonlocal status_code
             if message["type"] == "http.response.start":
+                status_code = message.get("status", 200)
                 headers = list(message.get("headers", []))
-                headers.append((b"x-request-id", request_id.encode()))
-                headers.append((b"x-trace-id", trace_id.encode()))
+                headers.append((b"x-request-id", request_id.encode("latin-1")))
+                headers.append((b"x-trace-id", trace_id.encode("latin-1")))
                 message["headers"] = headers
             await send(message)
 
-        # Note: context vars are intentionally NOT cleared here. The global
-        # exception handler runs in ServerErrorMiddleware, outside this
-        # middleware, and needs the IDs to still be set. Each request
-        # overwrites them at the start, so no cross-request leakage occurs.
         try:
             await self.app(scope, receive, send_wrapper)
-        finally:
+        except Exception as exc:
+            duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+            get_logger().error(
+                "request_failed",
+                extra={
+                    "http_method": method,
+                    "http_path": path,
+                    "status_code": 500,
+                    "duration_ms": duration_ms,
+                    "error": str(exc),
+                },
+                exc_info=True,
+            )
+            raise
+        else:
+            duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
             get_logger().info(
                 "request_completed",
-                extra={"method": scope.get("method"), "path": scope.get("path")},
+                extra={
+                    "http_method": method,
+                    "http_path": path,
+                    "status_code": status_code,
+                    "duration_ms": duration_ms,
+                },
             )
 
 

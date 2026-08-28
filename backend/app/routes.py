@@ -1,12 +1,17 @@
-"""HTTP endpoints: the liveness probe and the chat/ask contract."""
+"""HTTP endpoints executing the LangGraph orchestration pipeline."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+import uuid
+from typing import Any
+
+from fastapi import APIRouter, Request
 
 from app.context import get_request_id, get_trace_id
 from app.logging_config import get_logger
 from app.models import AskRequest, AskResponse
+from app.rate_limiter import limiter
+from app.workflow.graph import invoke_workflow
 
 router = APIRouter()
 
@@ -18,25 +23,25 @@ def health() -> dict[str, str]:
 
 
 @router.post("/ask", response_model=AskResponse)
-def ask(payload: AskRequest) -> AskResponse:
-    """Accept a user query and return an answer.
+@limiter.limit("30/minute")
+async def ask(request: Request, payload: AskRequest) -> AskResponse:
+    """Accept a user query and execute the LangGraph orchestrator workflow."""
+    session_id = payload.session_id or uuid.uuid4().hex
 
-    Phase 1: returns a dummy/mock response. The LangGraph workflow will
-    replace this in later phases.
-    """
     get_logger().info(
         "ask_received",
-        extra={"session_id": payload.session_id, "message_length": len(payload.message)},
+        extra={"session_id": session_id, "message_length": len(payload.message)},
     )
+
+    result: dict[str, Any] = await invoke_workflow(query=payload.message, session_id=session_id)
+
     return AskResponse(
-        answer=(
-            f"Mock response for: {payload.message!r}. "
-            "The orchestrator workflow is not wired up yet."
-        ),
-        source="unknown",
+        answer=result.get("final_answer", "No analysis result was produced."),
+        source=result.get("selected_source", "UNKNOWN"),
         metadata={
-            "session_id": payload.session_id,
-            "phase": "phase1-mock",
+            "session_id": session_id,
+            "errors": result.get("errors", []),
+            "analysis_result": result.get("analysis_result"),
             "request_id": get_request_id(),
             "trace_id": get_trace_id(),
         },
