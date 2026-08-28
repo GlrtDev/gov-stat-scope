@@ -1,0 +1,39 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "BedrockModelAccess",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:Converse"
+            ],
+            "Resource": [
+                "arn:aws:bedrock:<REGION>::foundation-model/anthropic.claude-3-haiku-20240307-v1:0",
+                "arn:aws:bedrock:<REGION>::foundation-model/gemma*"
+            ]
+        },
+        {
+            "Sid": "DynamoDBStatePersistence",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem"
+            ],
+            "Resource": "arn:aws:dynamodb:<REGION>:<AWS_ACCOUNT_ID>:table/govdata-sessions"
+        },
+        {
+            "Sid": "SecretsManagerAPIKeys",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue"
+            ],
+            "Resource": [
+                "arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:govdata/gus-api-key-*",
+                "arn:aws:secretsmanager:<REGION>:<AWS_ACCOUNT_ID>:secret:govdata/fred-api-key-*"
+            ]
+        }
+    ]
+}
