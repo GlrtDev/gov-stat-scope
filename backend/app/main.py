@@ -19,8 +19,6 @@ from app.logging_config import configure_logging
 from app.middleware import RequestContextMiddleware
 from app.rate_limiter import limiter
 from app.routes import router as core_router
-from app.routes.health import router as health_router
-from app.routes.sessions import router as sessions_router
 from app.services.secrets_client import AsyncSecretsClient
 from app.storage.dynamodb_saver import init_dynamodb_tables
 
@@ -118,14 +116,21 @@ app.state.limiter = limiter
 
 app.add_middleware(TimeoutMiddleware, timeout=30)
 app.add_middleware(RequestContextMiddleware)
+
+# Secure CORS configuration supporting local development, AWS cloud previews, and production domains
+ALLOWED_ORIGIN_REGEXES = [
+    r"http://localhost(:\d+)?",
+    r"http://127\.0\.0\.1(:\d+)?",
+    r"https://.*\.amazonaws\.com",
+    r"https://(www\.)?govstatscope\.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex="|".join(ALLOWED_ORIGIN_REGEXES),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app.include_router(core_router)
-app.include_router(health_router)
-app.include_router(sessions_router)

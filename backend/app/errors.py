@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
@@ -12,6 +13,7 @@ from starlette.exceptions import HTTPException
 
 from app.context import get_request_id, get_trace_id
 from app.logging_config import get_logger
+from app.rate_limiter import limiter
 
 
 def _build_problem_payload(
@@ -44,7 +46,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         title="Request Validation Failed",
         status=422,
         detail="The request body or parameters are invalid.",
-        errors=exc.errors()
+        errors=jsonable_encoder(exc.errors())
     )
     return JSONResponse(status_code=422, content=payload, media_type="application/problem+json")
 
@@ -90,6 +92,8 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 def add_exception_handlers(app: FastAPI) -> None:
     """Registers all global exception handlers to the FastAPI application instance."""
+    app.state.limiter = limiter
+
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(RateLimitExceeded, rate_limit_error_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)

@@ -9,11 +9,12 @@ from fastapi import APIRouter, Request
 
 from app.context import get_request_id, get_trace_id
 from app.logging_config import get_logger
-from app.models import AskRequest, AskResponse
+from app.models import AskRequest, AskResponse, DataSource
 from app.rate_limiter import limiter
 from app.workflow.graph import invoke_workflow
 
-router = APIRouter(tags=["Orchestration"])
+
+router = APIRouter(prefix="/api/v1", tags=["Orchestration"])
 
 
 @router.post("/ask", response_model=AskResponse)
@@ -31,7 +32,7 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
 
     return AskResponse(
         answer=result.get("final_answer", "No analysis result was produced."),
-        source=result.get("selected_source", "UNKNOWN"),
+        source=_normalize_selected_source(result.get("selected_source")),
         metadata={
             "session_id": session_id,
             "errors": result.get("errors", []),
@@ -40,3 +41,12 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
             "trace_id": get_trace_id(),
         },
     )
+
+def _normalize_selected_source(value: Any) -> DataSource | str:
+    if value == DataSource.GUS or value == "GUS":
+        return DataSource.GUS
+
+    if value == DataSource.FRED or value == "FRED":
+        return DataSource.FRED
+
+    return "unknown"
