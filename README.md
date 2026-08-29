@@ -47,10 +47,10 @@ docker compose up --build
 * [ ] ECS backend deployment (Task definitions, ALB, IAM roles)
 * [ ] DynamoDB session state persistence & TTL
 * [ ] CloudWatch logs & metrics dashboard
-* [ ] Unit tests (GUS/FRED URL builders, normalization, math calculations)
+* [x] Unit tests (GUS/FRED URL builders, normalization, math calculations)
 * [ ] Integration tests (Mocked API fixtures, LangGraph flow, local DynamoDB)
 * [ ] Pydantic contract validation for Bedrock JSON outputs
 * [ ] Manual test scenarios (GUS Poland, US FRED, ambiguous & out-of-scope queries)
 * [ ] Structured logging & Bedrock/DynamoDB cost tracking
 * [ ] Architecture diagrams (Mermaid.js workflow)
-* [ ] Demo script & interview talking points
+* [ ] Demo script
