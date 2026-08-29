@@ -14,17 +14,19 @@ def test_router_output_contract() -> None:
     """Assert valid and invalid JSON deserialization for RouterOutput."""
     valid_payload = {
         "selected_source": "GUS",
-        "reasoning": "Identified Polish territorial data requirement.",
-        "extracted_metric": "stopa bezrobocia",
+        "reason": "Identified Polish territorial data requirement.",
+        "confidence": 0.95,
+        "extracted_entities": {"metric": "stopa bezrobocia"},
     }
     instance = RouterOutput.model_validate(valid_payload)
     assert instance.selected_source == "GUS"
-    assert instance.reasoning == "Identified Polish territorial data requirement."
-    assert instance.extracted_metric == "stopa bezrobocia"
+    assert instance.reason == "Identified Polish territorial data requirement."
+    assert instance.confidence == 0.95
+    assert instance.extracted_entities == {"metric": "stopa bezrobocia"}
 
-    # Missing mandatory reasoning field
+    # Missing mandatory reason field
     with pytest.raises(ValidationError):
-        RouterOutput.model_validate({"selected_source": "GUS"})
+        RouterOutput.model_validate({"selected_source": "GUS", "confidence": 1.0})
 
 
 def test_api_engineer_output_contract() -> None:
@@ -57,13 +59,13 @@ def test_ask_request_contract() -> None:
     assert req.message == "What is the GDP growth rate?"
     assert req.session_id == "abc-123"
 
-    # Default session ID generation or null handling
-    req_no_session = AskRequest(message="What is the GDP growth rate?")
-    assert req_no_session.session_id is None
+    # Missing required session_id
+    with pytest.raises(ValidationError):
+        AskRequest.model_validate({"message": "What is the GDP growth rate?"})
 
     # Missing message
     with pytest.raises(ValidationError):
-        AskRequest.model_validate({})
+        AskRequest.model_validate({"session_id": "abc-123"})
 
 
 def test_ask_response_contract() -> None:

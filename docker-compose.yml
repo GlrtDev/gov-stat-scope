@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   orchestrator-net:
     driver: bridge
@@ -33,7 +31,9 @@ services:
     volumes:
       - ./infra/dynamodb-data:/home/dynamodblocal/data
     networks:
-      - orchestrator-net
+      orchestrator-net:
+        aliases:
+          - dynamodb-local
 
   test-runner:
     build:
@@ -51,4 +51,5 @@ services:
       - PYTHONPATH=/app
     networks:
       - orchestrator-net
-    entrypoint: ["pytest"]
+    depends_on:
+      - dynamodb-local
