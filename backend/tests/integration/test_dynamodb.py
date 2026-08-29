@@ -13,11 +13,13 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from langchain_core.runnables import RunnableConfig
 
-from app.main import app
+# CRITICAL FIX: Alias the import to avoid namespace collision with the 'app' directory
+from app.main import app as fastapi_app
 from app.storage.dynamodb_saver import DynamoDBSaver, init_dynamodb_tables
 from app.workflow.graph import invoke_workflow
+import app.workflow.graph
 
-DYNAMODB_ENDPOINT = os.getenv("DYNAMODB_ENDPOINT", "http://localhost:8000")
+DYNAMODB_ENDPOINT = os.getenv("DYNAMODB_ENDPOINT", "http://dynamodb-local:8000")
 TABLE_NAME = "govdata-sessions-test"
 
 
@@ -56,7 +58,7 @@ def setup_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest_asyncio.fixture
 async def ddb_saver() -> AsyncGenerator[DynamoDBSaver, None]:
-    """Ensure the target DynamoDB table exists and yield a configured DynamoDBSaver instance."""
+    """Ensure the target DynamoDB table exists, yield saver, and patch global graph checkpointer."""
     await init_dynamodb_tables(
         table_name=TABLE_NAME,
         region_name="us-east-1",
@@ -67,13 +69,22 @@ async def ddb_saver() -> AsyncGenerator[DynamoDBSaver, None]:
         region_name="us-east-1",
         endpoint_url=DYNAMODB_ENDPOINT,
     )
+    
+    # Route global graph to use the test checkpointer
+    original_checkpointer = app.workflow.graph.app_graph.checkpointer
+    app.workflow.graph.app_graph.checkpointer = saver
+    
     yield saver
+    
+    # Restore global state
+    app.workflow.graph.app_graph.checkpointer = original_checkpointer
 
 
 @pytest_asyncio.fixture
 async def app_client() -> AsyncGenerator[AsyncClient, None]:
     """Provide an HTTPX AsyncClient that manages FastAPI lifecycle events."""
-    transport = ASGITransport(app=app)
+    # Use the aliased fastapi_app object here
+    transport = ASGITransport(app=fastapi_app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
 

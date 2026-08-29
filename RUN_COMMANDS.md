@@ -13,7 +13,10 @@ bash ./scripts/test.sh all
 ```
 
 # Run a single test file using the Bash script (Mac/Linux/WSL)
+```
 ./scripts/test.sh single tests/integration/test_fred_integration.py
-
+```
 # Run a single test file using the PowerShell script (Windows)
-.\scripts\test.ps1 -TestType single -TestPath "tests\integration\test_fred_integration.py"
+```
+.\scripts\test.ps1 -TestType single -TestPath "tests\integration\test_dynamodb.py"
+```
