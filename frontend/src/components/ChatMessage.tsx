@@ -1,53 +1,53 @@
+// frontend/src/components/ChatMessage.tsx
 import React from 'react';
 import type { ChatMessage as ChatMessageType } from '../types/api';
-import { SourceBadge } from './SourceBadge';
 
-interface ChatMessageProps {
+type SourceBadgeProps = {
+  source?: string;
+  isError?: boolean;
+};
+
+const SourceBadge: React.FC<SourceBadgeProps> = ({ source, isError }) => {
+  if (isError) {
+    return <span className="badge text-bg-danger rounded-pill fw-semibold">Error</span>;
+  }
+
+  const normalizedSource = (source ?? '').trim().toUpperCase();
+
+  if (!normalizedSource || normalizedSource === 'UNSUPPORTED') {
+    return null;
+  }
+
+  const label = normalizedSource === 'GUS' ? 'GUS · Poland' : normalizedSource === 'FRED' ? 'FRED · US' : normalizedSource;
+  const className =
+    normalizedSource === 'GUS'
+      ? 'badge text-bg-primary rounded-pill fw-semibold'
+      : normalizedSource === 'FRED'
+        ? 'badge text-bg-success rounded-pill fw-semibold'
+        : 'badge text-bg-secondary rounded-pill fw-semibold';
+
+  return <span className={className}>{label}</span>;
+};
+
+type ChatMessageProps = {
   message: ChatMessageType;
-}
+};
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isUser = message.role === 'user';
-
-  const containerAlignment = isUser ? 'justify-end' : 'justify-start';
-  const bubbleStyles = isUser 
-    ? 'bg-blue-600 text-white' 
-    : message.isError 
-      ? 'bg-red-50 text-red-900 border border-red-200' 
-      : 'bg-white text-gray-900 border border-gray-200 shadow-sm';
+  const isError = Boolean(message.isError);
 
   return (
-    <div className={`flex w-full ${containerAlignment} mb-6`}>
-      <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-5 ${bubbleStyles} flex flex-col gap-3`}>
-        
-        {!isUser && message.source && (
-          <div>
-            <SourceBadge source={message.source} />
-          </div>
-        )}
-
-        <div className="whitespace-pre-wrap leading-relaxed">
-          {message.content}
+    <div className={`chat-row ${isUser ? 'justify-content-end' : 'justify-content-start'}`}>
+      <div className={`message-bubble ${isUser ? 'message-user' : 'message-assistant'} ${isError ? 'message-error' : ''} d-flex flex-column gap-2 p-3 rounded-4 shadow-sm`}>
+        <div className="d-flex align-items-center justify-content-between gap-2">
+          <span className={`message-author fw-semibold small ${isUser ? 'text-white' : isError ? 'text-danger-emphasis' : 'text-body-secondary'}`}>
+            {isUser ? 'You' : 'GovStatScope AI'}
+          </span>
+          {!isUser && <SourceBadge source={message.source} isError={isError} />}
         </div>
 
-        {!isUser && message.metadata && Object.keys(message.metadata).length > 0 && (
-          <div className={`mt-2 pt-3 border-t ${message.isError ? 'border-red-200' : 'border-gray-200'}`}>
-            <h4 className="text-xs font-bold uppercase tracking-wider mb-2 opacity-70">Metadata</h4>
-            <div className="grid grid-cols-1 gap-1 text-sm opacity-90">
-              {Object.entries(message.metadata).map(([key, value]) => (
-                <div key={key} className="flex flex-col sm:flex-row sm:gap-2">
-                  <span className="font-semibold text-xs mt-0.5 capitalize min-w-max">
-                    {key.replace(/_/g, ' ')}:
-                  </span>
-                  <span className="font-mono text-xs break-all">
-                    {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
+        <p className={`mb-0 message-content ${isUser ? 'text-white' : ''}`}>{message.content}</p>
       </div>
     </div>
   );

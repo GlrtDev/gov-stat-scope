@@ -1,6 +1,14 @@
+// frontend/src/api/client.ts
 import type { AskRequest, AskResponse, ProblemDetails } from '../types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const getApiBaseUrl = (): string => {
+  const configuredBase: string | undefined = import.meta.env.VITE_API_BASE_URL;
+  const base = (configuredBase ?? 'http://localhost:8000').trim().replace(/\/+$/, '');
+
+  return base.endsWith('/api/v1') ? base : `${base}/api/v1`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export class ApiError extends Error {
   public status: number;
@@ -25,7 +33,7 @@ export async function askOrchestrator(query: string, sessionId?: string): Promis
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json, application/problem+json',
+        Accept: 'application/json, application/problem+json',
       },
       body: JSON.stringify(payload),
     });
