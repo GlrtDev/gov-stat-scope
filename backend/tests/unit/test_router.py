@@ -50,8 +50,9 @@ async def test_router_classification_paths(
         extracted_entities={"metric": "unemployment_or_gdp"},
     )
 
+    # Corrected the state structure to match the updated invoke_workflow dictionary shape
     state: OrchestratorState = {
-        "user_query": query,
+        "user_query": {"raw_text": query, "session_id": "test-session-123"},
         "session_id": "test-session-123",
         "messages": [],
         "selected_source": "",

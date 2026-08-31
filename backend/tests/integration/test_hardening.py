@@ -31,7 +31,7 @@ def setup_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DYNAMODB_ENDPOINT", "http://localhost:8000")
     monkeypatch.setenv("LLM_PROVIDER", "openai")
 
-    async def _fake_invoke_workflow(*, query: str, session_id: str) -> dict[str, Any]:
+    async def _fake_invoke_workflow(*, query: str, session_id: str, forced_source: str | None = None) -> dict[str, Any]:
         return {"final_answer": "ok", "errors": [], "analysis_result": None}
 
     monkeypatch.setattr(routes_module, "invoke_workflow", _fake_invoke_workflow)
@@ -175,7 +175,7 @@ async def test_method_not_allowed_on_ask_returns_405(app_client: AsyncClient) ->
 
 @pytest.mark.asyncio
 async def test_workflow_failure_returns_rfc7807_500(exception_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    async def _failing_invoke_workflow(*, query: str, session_id: str) -> dict[str, Any]:
+    async def _failing_invoke_workflow(*, query: str, session_id: str, forced_source: str | None = None) -> dict[str, Any]:
         raise RuntimeError("simulated workflow failure")
 
     monkeypatch.setattr(routes_module, "invoke_workflow", _failing_invoke_workflow)

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from typing import Any, Generator
 from unittest.mock import AsyncMock, patch
 
 import pytest
 import respx
 from httpx import Response
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
 
 import app.workflow.graph
@@ -17,7 +18,7 @@ from app.workflow.nodes.router import RouterOutput
 
 
 @pytest.fixture(autouse=True)
-def override_checkpointer() -> None:
+def override_checkpointer() -> Generator[None, None, None]:
     """Replace the global DynamoDB checkpointer with an in-memory saver to prevent network I/O."""
     original_checkpointer = app.workflow.graph.app_graph.checkpointer
     app.workflow.graph.app_graph.checkpointer = MemorySaver()
@@ -26,12 +27,24 @@ def override_checkpointer() -> None:
     app.workflow.graph.app_graph.checkpointer = original_checkpointer
 
 
+def safe_human_message(*args: Any, **kwargs: Any) -> HumanMessage:
+    """Helper to prevent Pydantic ValidationErrors if legacy nodes pass state dictionary directly."""
+    if "content" in kwargs and isinstance(kwargs["content"], dict):
+        kwargs["content"] = kwargs["content"].get("raw_text", str(kwargs["content"]))
+    elif len(args) > 0 and isinstance(args[0], dict):
+        args = (args[0].get("raw_text", str(args[0])),) + args[1:]
+    return HumanMessage(*args, **kwargs)
+
+
 @pytest.fixture
-def mock_llm_chain() -> None:
+def mock_llm_chain() -> Generator[None, None, None]:
     """Mock the LLM factory to return deterministic Pydantic schemas and Native Tool Calls."""
+    # Patch HumanMessage in downstream nodes to prevent Pydantic crashes during End-to-End simulation
     with patch("app.workflow.nodes.router.get_llm") as mock_router_llm, \
          patch("app.workflow.nodes.api_engineer.get_llm") as mock_api_llm, \
-         patch("app.workflow.nodes.analyst.get_llm") as mock_analyst_llm:
+         patch("app.workflow.nodes.analyst.get_llm") as mock_analyst_llm, \
+         patch("app.workflow.nodes.api_engineer.HumanMessage", new=safe_human_message, create=True), \
+         patch("app.workflow.nodes.analyst.HumanMessage", new=safe_human_message, create=True):
 
         # 1. Mock Router Node
         router_chain = AsyncMock()

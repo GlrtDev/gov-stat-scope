@@ -25,10 +25,19 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
 
     get_logger().info(
         "ask_received",
-        extra={"session_id": session_id, "message_length": len(payload.message)},
+        extra={
+            "session_id": session_id,
+            "message_length": len(payload.message),
+            "forced_source": payload.data_source,
+        },
     )
 
-    result: dict[str, Any] = await invoke_workflow(query=payload.message, session_id=session_id)
+    # Pass the explicitly selected data_source to bypass LangGraph's router node
+    result: dict[str, Any] = await invoke_workflow(
+        query=payload.message, 
+        session_id=session_id,
+        forced_source=payload.data_source
+    )
 
     return AskResponse(
         answer=result.get("final_answer", "No analysis result was produced."),
@@ -41,6 +50,7 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
             "trace_id": get_trace_id(),
         },
     )
+
 
 def _normalize_selected_source(value: Any) -> DataSource | str:
     if value == DataSource.GUS or value == "GUS":

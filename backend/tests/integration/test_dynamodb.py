@@ -118,7 +118,7 @@ async def test_dynamodb_multi_turn_memory(ddb_saver: DynamoDBSaver) -> None:
     """Validate multi-turn conversation persistence and checkpoint creation in DynamoDB."""
     session_id = f"test-session-{uuid.uuid4()}"
 
-    turn1_res = await invoke_workflow("What is the population of Poland in 2022?", session_id)
+    turn1_res = await invoke_workflow(query="What is the population of Poland in 2022?", session_id=session_id)
     assert turn1_res.get("selected_source") == "GUS"
     assert turn1_res.get("final_answer") is not None
     turn1_msg_count = len(turn1_res.get("messages", []))
@@ -132,7 +132,7 @@ async def test_dynamodb_multi_turn_memory(ddb_saver: DynamoDBSaver) -> None:
     )
     assert len(db_items["Items"]) > 0
 
-    turn2_res = await invoke_workflow("How about 2023?", session_id)
+    turn2_res = await invoke_workflow(query="How about 2023?", session_id=session_id)
     assert turn2_res.get("final_answer") is not None
     assert len(turn2_res.get("messages", [])) > turn1_msg_count
 
@@ -142,7 +142,7 @@ async def test_get_session_endpoint(app_client: AsyncClient, ddb_saver: DynamoDB
     """Validate that stored session state is retrievable through the REST API."""
     session_id = f"test-api-{uuid.uuid4()}"
 
-    await invoke_workflow("What is the US GDP?", session_id)
+    await invoke_workflow(query="What is the US GDP?", session_id=session_id)
 
     response = await app_client.get(f"/sessions/{session_id}")
     assert response.status_code == 200, f"Failed with {response.status_code}: {response.text}"

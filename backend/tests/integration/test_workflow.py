@@ -3,28 +3,37 @@
 from __future__ import annotations
 
 import os
-from typing import Generator
+from collections.abc import AsyncGenerator, Generator
 
 import httpx
 import pytest
+import pytest_asyncio
 from pytest import MonkeyPatch
 
+import app.workflow.graph
+from app.storage.dynamodb_saver import DynamoDBSaver, init_dynamodb_tables
 from app.workflow.graph import invoke_workflow
 
+DYNAMODB_ENDPOINT = os.getenv("DYNAMODB_ENDPOINT", "http://dynamodb-local:8000")
+TABLE_NAME = "govdata-sessions-test"
 
-def is_llm_available() -> bool:
-    """Check if the local OpenAI-compatible endpoint is reachable."""
+
+def is_infrastructure_available() -> bool:
+    """Verify local DynamoDB and LLM endpoints are reachable before executing integration tests."""
     api_base = os.getenv("OPENAI_API_BASE", "http://host.docker.internal:1234/v1")
     try:
-        response = httpx.get(f"{api_base}/models", timeout=2.0)
-        return response.status_code == 200
-    except Exception:
+        # Check LLM
+        llm_resp = httpx.get(f"{api_base}/models", timeout=2.0)
+        # Check DynamoDB Local
+        ddb_resp = httpx.get(DYNAMODB_ENDPOINT, timeout=2.0)
+        return llm_resp.status_code == 200 and ddb_resp.status_code == 400  # DDB Local returns 400 on root GET
+    except httpx.HTTPError:
         return False
 
 
 pytestmark = pytest.mark.skipif(
-    not is_llm_available(),
-    reason="Local LLM endpoint unreachable. Skipping live integration tests."
+    not is_infrastructure_available(),
+    reason="Required local infrastructure (DynamoDB/LM Studio) is unreachable. Skipping live integration tests."
 )
 
 
@@ -42,13 +51,38 @@ def setup_integration_env(monkeypatch: MonkeyPatch) -> Generator[None, None, Non
     yield
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def setup_workflow_checkpointer() -> AsyncGenerator[None, None]:
+    """Ensure the sessions table exists and route the global graph checkpointer to it."""
+    await init_dynamodb_tables(
+        table_name=TABLE_NAME,
+        region_name="us-east-1",
+        endpoint_url=DYNAMODB_ENDPOINT,
+    )
+
+    saver = DynamoDBSaver(
+        table_name=TABLE_NAME,
+        region_name="us-east-1",
+        endpoint_url=DYNAMODB_ENDPOINT,
+    )
+
+    # Route global graph to use the test checkpointer
+    original_checkpointer = app.workflow.graph.app_graph.checkpointer
+    app.workflow.graph.app_graph.checkpointer = saver
+
+    yield
+
+    # Restore global state
+    app.workflow.graph.app_graph.checkpointer = original_checkpointer
+
+
 @pytest.mark.asyncio
 async def test_workflow_gus_routing_and_analysis() -> None:
     """Validate that a Poland-specific query routes to GUS, retrieves records, and synthesizes data."""
     query = "What is the population of Poland over the last few years?"
     session_id = "test-live-gus-001"
 
-    result = await invoke_workflow(query, session_id)
+    result = await invoke_workflow(query=query, session_id=session_id)
 
     assert result["selected_source"] == "GUS"
     assert result["final_answer"] is not None
@@ -67,7 +101,7 @@ async def test_workflow_fred_routing_and_analysis() -> None:
     query = "What is the current US GDP and how has it changed recently?"
     session_id = "test-live-fred-001"
 
-    result = await invoke_workflow(query, session_id)
+    result = await invoke_workflow(query=query, session_id=session_id)
 
     assert result["selected_source"] == "FRED"
     assert result["final_answer"] is not None
@@ -83,7 +117,7 @@ async def test_workflow_unsupported_routing() -> None:
     query = "Can you give me a recipe for chocolate chip cookies?"
     session_id = "test-live-unsupported-001"
 
-    result = await invoke_workflow(query, session_id)
+    result = await invoke_workflow(query=query, session_id=session_id)
 
     assert result["selected_source"] == "UNSUPPORTED"
     assert len(result["errors"]) > 0

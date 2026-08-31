@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
-
 from app.models import AskRequest, AskResponse, ErrorResponse
 from app.workflow.nodes.api_engineer import ApiEngineerOutput
 from app.workflow.nodes.router import RouterOutput
+from pydantic import ValidationError
 
 
 def test_router_output_contract() -> None:
@@ -59,9 +58,9 @@ def test_ask_request_contract() -> None:
     assert req.message == "What is the GDP growth rate?"
     assert req.session_id == "abc-123"
 
-    # Missing required session_id
-    with pytest.raises(ValidationError):
-        AskRequest.model_validate({"message": "What is the GDP growth rate?"})
+    # Missing session_id is auto-generated, not rejected
+    req_auto = AskRequest.model_validate({"message": "What is the GDP growth rate?"})
+    assert isinstance(req_auto.session_id, str) and len(req_auto.session_id) > 0
 
     # Missing message
     with pytest.raises(ValidationError):

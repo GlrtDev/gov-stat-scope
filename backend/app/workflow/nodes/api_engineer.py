@@ -21,6 +21,15 @@ class ApiEngineerOutput(BaseModel):
     justification: str = Field(description="Reasoning behind the parameter selection.")
 
 
+def _extract_query_string(user_query: Any) -> str:
+    """Safely extract the raw query string from dicts, objects, or primitive strings."""
+    if isinstance(user_query, str):
+        return user_query
+    if isinstance(user_query, dict):
+        return str(user_query.get("raw_text") or user_query.get("query") or "")
+    return str(getattr(user_query, "raw_text", user_query))
+
+
 async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
     """Bind adapter tools, extract parameters via LLM, and execute data retrieval."""
     llm = get_llm(temperature=0.0)
@@ -34,19 +43,20 @@ async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
         "If dates or years are not specified, default to the last 5 full years. You must output a tool call."
     )
     
+    raw_text = _extract_query_string(state.get("user_query", ""))
     messages = [
         SystemMessage(content=system_prompt),
-        HumanMessage(content=state["user_query"])
+        HumanMessage(content=raw_text)
     ]
     
     ai_message: AIMessage = await llm_with_tools.ainvoke(messages)  # type: ignore
     
-    errors = list(state.get("errors", []))
     new_messages = [ai_message]
     normalized_data = None
+    node_errors = []
     
     if not ai_message.tool_calls:
-        errors.append("API Engineer failed to generate a tool call.")
+        node_errors.append("API Engineer failed to generate a tool call.")
     else:
         tool_call = ai_message.tool_calls[0]
         tool_name = tool_call["name"]
@@ -60,7 +70,7 @@ async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
         selected_tool = tool_map.get(tool_name)
         
         if not selected_tool:
-            errors.append(f"Requested tool '{tool_name}' is not available.")
+            node_errors.append(f"Requested tool '{tool_name}' is not available.")
         else:
             try:
                 tool_output_str = await selected_tool.ainvoke(tool_args)
@@ -73,17 +83,21 @@ async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
                 new_messages.append(tool_message)
                 
                 if "error" in tool_output_dict:
-                    errors.append(tool_output_dict["error"])
+                    node_errors.append(tool_output_dict["error"])
                 else:
                     normalized_data = tool_output_dict
                     
             except Exception as e:
-                errors.append(f"Tool execution unhandled exception: {str(e)}")
+                node_errors.append(f"Tool execution unhandled exception: {str(e)}")
+
+    # Safely merge errors based on whether state uses a reducer
+    existing_errors = list(state.get("errors", []))
+    final_errors = existing_errors + node_errors
 
     return {
         "messages": new_messages,
         "normalized_data": normalized_data,
-        "errors": errors
+        "errors": final_errors
     }
 
 

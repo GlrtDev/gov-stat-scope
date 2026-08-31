@@ -6,6 +6,7 @@ LangGraph workflow, plus the public request/response schemas.
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
@@ -18,6 +19,8 @@ class DataSource(str, Enum):
 
     GUS = "GUS"
     FRED = "FRED"
+    UNKNOWN = "UNKNOWN"
+    UNSUPPORTED = "UNSUPPORTED"
 
 
 class ChatRole(str, Enum):
@@ -107,14 +110,22 @@ class AskRequest(BaseModel):
     """Request body for POST /ask."""
 
     message: str = Field(..., min_length=1, description="User message text")
-    session_id: str = Field(..., min_length=1, description="Conversation session identifier")
+    session_id: str | None = Field(
+        default_factory=lambda: uuid.uuid4().hex,
+        min_length=1,
+        description="Conversation session identifier; auto-generated when omitted",
+    )
+    data_source: DataSource | None = Field(
+        default=None,
+        description="Explicit data source selected via UI dropdown. Bypasses LLM routing if provided."
+    )
 
 
 class AskResponse(BaseModel):
     """Response body for POST /ask."""
 
     answer: str
-    source: DataSource | Literal["unknown"] = "unknown"
+    source: DataSource | str = DataSource.UNKNOWN
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
