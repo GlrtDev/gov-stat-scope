@@ -1,3 +1,4 @@
+# docker-compose.yml
 networks:
   orchestrator-net:
     driver: bridge
@@ -12,11 +13,22 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      - AWS_REGION=us-east-1
-      - AWS_ACCESS_KEY_ID=dummy
-      - AWS_SECRET_ACCESS_KEY=dummy
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-dummy}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-dummy}
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - DYNAMODB_TABLE_NAME=${DYNAMODB_TABLE_NAME:-govdata-sessions}
+
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_MODEL=${LLM_MODEL:-qwen3.8-27b}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-http://host.docker.internal:1234/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-lm-studio}
+
+      - GUS_API_KEY=${GUS_API_KEY:-dummy_gus_key_for_local}
+      - FRED_API_KEY=${FRED_API_KEY:-dummy_fred_key_for_local}
     networks:
       - orchestrator-net
     depends_on:
@@ -43,12 +55,23 @@ services:
     profiles: ["test"]
     volumes:
       - ./backend:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      - AWS_REGION=us-east-1
-      - AWS_ACCESS_KEY_ID=dummy
-      - AWS_SECRET_ACCESS_KEY=dummy
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-dummy}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-dummy}
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - DYNAMODB_TABLE_NAME=${DYNAMODB_TABLE_NAME:-govdata-sessions-test}
       - PYTHONPATH=/app
+
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_MODEL=${LLM_MODEL:-qwen3.8-27b}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-http://host.docker.internal:1234/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-lm-studio}
+
+      - GUS_API_KEY=${GUS_API_KEY:-dummy_gus_key_for_local}
+      - FRED_API_KEY=${FRED_API_KEY:-dummy_fred_key_for_local}
     networks:
       - orchestrator-net
     depends_on:

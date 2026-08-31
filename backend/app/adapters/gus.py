@@ -1,4 +1,6 @@
+# backend/app/adapters/gus.py
 import os
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -15,6 +17,9 @@ from app.adapters.schemas import DataPoint, NormalizedSeries
 from app.models import DataSource
 
 
+logger = logging.getLogger(__name__)
+
+
 class GUSAOError(Exception):
     """Base exception for GUS Adapter errors."""
     pass
@@ -23,6 +28,41 @@ class GUSAOError(Exception):
 class GUSNotFoundError(GUSAOError):
     """Raised when a requested resource is not found in the GUS API."""
     pass
+
+
+def _normalize_gus_api_key(raw_value: Optional[str]) -> Optional[str]:
+    """Return a real GUS API key, or None if the value is missing/placeholder."""
+    if raw_value is None:
+        return None
+
+    key = raw_value.strip()
+    if not key:
+        return None
+
+    normalized = key.lower().replace(" ", "_")
+    placeholder_values = {
+        "none",
+        "null",
+        "undefined",
+        "placeholder",
+        "changeme",
+        "dummy",
+        "your_gus_key_here",
+        "your-gus-key-here",
+        "your_gus_client_id_here",
+        "dummy_gus_key_for_local",
+    }
+
+    if normalized in placeholder_values:
+        return None
+
+    if normalized.startswith("dummy"):
+        return None
+
+    if "your_" in normalized or "your-" in normalized:
+        return None
+
+    return key
 
 
 class GUSClient(DataSourceClient):
@@ -34,7 +74,14 @@ class GUSClient(DataSourceClient):
     BASE_URL = "https://bdl.stat.gov.pl/api/v1/"
 
     def __init__(self) -> None:
-        api_key = os.getenv("GUS_API_KEY") or os.getenv("GUS_CLIENT_ID")
+        raw_api_key = os.getenv("GUS_API_KEY") or os.getenv("GUS_CLIENT_ID")
+        api_key = _normalize_gus_api_key(raw_api_key)
+
+        if raw_api_key is not None and api_key is None:
+            logger.warning(
+                "GUS API key looks like a placeholder or dummy value. Continuing without X-ClientId authentication."
+            )
+
         headers: Dict[str, str] = {"Accept": "application/json"}
         if api_key:
             headers["X-ClientId"] = api_key
