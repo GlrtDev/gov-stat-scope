@@ -1,9 +1,11 @@
+# backend/app/workflow/nodes/router.py
 """Intent router node for data source classification."""
+
+from __future__ import annotations
 
 from typing import Any, Dict, Literal
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langgraph.graph import END
 from pydantic import BaseModel, Field
 
 from app.models import DataSource
@@ -14,25 +16,22 @@ class RouterOutput(BaseModel):
     selected_source: Literal["GUS", "FRED", "UNSUPPORTED"] = Field(
         description="The target data source based on the user query."
     )
-    confidence: float = Field(
-        description="Confidence score of the routing decision between 0.0 and 1.0."
-    )
-    extracted_entities: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Key entities extracted from the query such as location, metric, or time period."
-    )
-    reason: str = Field(
-        description="Explanation of why this source was selected."
-    )
+    confidence: float = Field(description="Confidence score between 0.0 and 1.0.")
+    extracted_entities: Dict[str, Any] = Field(default_factory=dict)
+    reason: str = Field(description="Explanation of why this source was selected.")
 
 
 def _extract_query_string(user_query: Any) -> str:
     """Safely extract the raw query string."""
     if isinstance(user_query, str):
-        return user_query
+        return user_query.strip()
     if isinstance(user_query, dict):
-        return str(user_query.get("raw_text") or user_query.get("query") or "")
-    return str(getattr(user_query, "raw_text", user_query))
+        return str(
+            user_query.get("raw_text") or user_query.get("query") or ""
+        ).strip()
+
+    value = getattr(user_query, "raw_text", user_query)
+    return str(value).strip()
 
 
 async def router_agent_node(state: dict[str, Any]) -> dict[str, Any]:
@@ -40,7 +39,9 @@ async def router_agent_node(state: dict[str, Any]) -> dict[str, Any]:
     if current_source and current_source not in (DataSource.UNKNOWN, "UNKNOWN", None):
         return {
             "messages": [
-                AIMessage(content=f"LLM routing bypassed. Explicit UI selection: {current_source}.")
+                AIMessage(
+                    content=f"LLM routing bypassed. Explicit UI selection: {current_source}."
+                )
             ]
         }
 
@@ -62,44 +63,46 @@ async def router_agent_node(state: dict[str, Any]) -> dict[str, Any]:
 
     messages = [
         SystemMessage(content=system_prompt),
-        HumanMessage(content=raw_text)
+        HumanMessage(content=raw_text),
     ]
 
-    result: RouterOutput = await structured_llm.ainvoke(messages)  # type: ignore
+    result: RouterOutput = await structured_llm.ainvoke(messages)  # type: ignore[misc]
 
     ai_message = AIMessage(
         content=f"Routing decision made: {result.selected_source}. Reason: {result.reason}"
     )
 
-    node_errors = []
+    node_errors: list[str] = []
     if result.selected_source == "UNSUPPORTED":
-        node_errors.append(f"Query '{raw_text}' is out of scope or ambiguous: {result.reason}")
+        reason = (result.reason or "").strip() or "The query is outside supported data sources."
+        node_errors.append(
+            f"Query '{raw_text}' is unsupported or ambiguous. Reason: {reason}"
+        )
 
     metadata = dict(state.get("metadata", {}))
     metadata["router"] = {
         "confidence": result.confidence,
         "extracted_entities": result.extracted_entities,
-        "reason": result.reason
+        "reason": result.reason,
     }
-
-    existing_errors = list(state.get("errors", []))
-    final_errors = existing_errors + node_errors
 
     return {
         "selected_source": result.selected_source,
         "metadata": metadata,
         "messages": [ai_message],
-        "errors": final_errors
+        "errors": node_errors,
     }
 
 
 def route_after_intent(state: dict[str, Any]) -> str:
     selected = state.get("selected_source")
-    normalized_source = selected.value if hasattr(selected, "value") else str(selected)
+    normalized_source = (
+        selected.value if hasattr(selected, "value") else str(selected or "").strip()
+    ).upper()
 
     if normalized_source in ("GUS", "FRED"):
         return "api_engineer"
-    elif normalized_source == "UNSUPPORTED":
+    if normalized_source == "UNSUPPORTED":
         return "error_handler"
-    
-    return END
+
+    return "error_handler"

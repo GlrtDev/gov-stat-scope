@@ -1,8 +1,10 @@
+# tests/integration/test_workflow.py
 """Integration tests for the LangGraph workflow with live local LLM and external data sources."""
 
 from __future__ import annotations
 
 import os
+import uuid
 from collections.abc import AsyncGenerator, Generator
 
 import httpx
@@ -80,7 +82,7 @@ async def setup_workflow_checkpointer() -> AsyncGenerator[None, None]:
 async def test_workflow_gus_routing_and_analysis() -> None:
     """Validate that a Poland-specific query routes to GUS, retrieves records, and synthesizes data."""
     query = "What is the population of Poland over the last few years?"
-    session_id = "test-live-gus-001"
+    session_id = f"test-live-gus-{uuid.uuid4().hex}"
 
     result = await invoke_workflow(query=query, session_id=session_id)
 
@@ -99,7 +101,7 @@ async def test_workflow_fred_routing_and_analysis() -> None:
         pytest.skip("FRED_API_KEY not configured. Skipping live FRED workflow test.")
 
     query = "What is the current US GDP and how has it changed recently?"
-    session_id = "test-live-fred-001"
+    session_id = f"test-live-fred-{uuid.uuid4().hex}"
 
     result = await invoke_workflow(query=query, session_id=session_id)
 
@@ -115,7 +117,7 @@ async def test_workflow_fred_routing_and_analysis() -> None:
 async def test_workflow_unsupported_routing() -> None:
     """Validate that out-of-scope queries trigger the UNSUPPORTED route and error handling."""
     query = "Can you give me a recipe for chocolate chip cookies?"
-    session_id = "test-live-unsupported-001"
+    session_id = f"test-live-unsupported-{uuid.uuid4().hex}"
 
     result = await invoke_workflow(query=query, session_id=session_id)
 
