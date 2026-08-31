@@ -20,3 +20,14 @@ bash ./scripts/test.sh all
 ```
 .\scripts\test.ps1 -TestType single -TestPath "tests\integration\test_dynamodb.py"
 ```
+
+
+# Running backend + dynamoDB for local dev
+```
+.\scripts\run_backend.ps1
+```
+or
+```
+chmod +x run_backend.sh
+.\scripts\run_backend.sh
+```
