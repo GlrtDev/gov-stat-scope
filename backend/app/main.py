@@ -1,3 +1,4 @@
+# backend/app/main.py
 """FastAPI application entrypoint with lifecycle, middleware, and routers."""
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class TimeoutMiddleware(BaseHTTPMiddleware):
     """Enforce a global request timeout to prevent hanging connections."""
+
     def __init__(self, app: FastAPI, timeout: int = 30) -> None:
         super().__init__(app)
         self.timeout = timeout
@@ -43,10 +45,10 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
                     "type": "urn:govdata:error:timeout",
                     "title": "Request Timeout",
                     "status": 408,
-                    "detail": "The server timed out waiting for the request to complete.",
-                    "instance": str(request.url)
+                    "detail": f"The server timed out waiting for the request to complete after {self.timeout} seconds.",
+                    "instance": str(request.url),
                 },
-                media_type="application/problem+json"
+                media_type="application/problem+json",
             )
 
 
@@ -71,7 +73,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     table_name = os.getenv("DYNAMODB_TABLE_NAME", "govdata-sessions")
     await init_dynamodb_tables(table_name=table_name, region_name=region_name)
-    
+
     yield
 
     logger.info("Initiating graceful shutdown...")
@@ -114,7 +116,10 @@ add_exception_handlers(app)
 # Middlewares and Router bindings
 app.state.limiter = limiter
 
-app.add_middleware(TimeoutMiddleware, timeout=30)
+REQUEST_TIMEOUT_SECONDS = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "120"))
+logger.info(f"Request timeout configured: {REQUEST_TIMEOUT_SECONDS}s")
+
+app.add_middleware(TimeoutMiddleware, timeout=REQUEST_TIMEOUT_SECONDS)
 app.add_middleware(RequestContextMiddleware)
 
 # Secure CORS configuration supporting local development, AWS cloud previews, and production domains
