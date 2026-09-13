@@ -2,7 +2,6 @@ curl -X 'GET' \
   'https://bdl.stat.gov.pl/api/v1/levels' \
   -H 'accept: application/json'
 
-
 {
   "totalRecords": 8,
   "results": [

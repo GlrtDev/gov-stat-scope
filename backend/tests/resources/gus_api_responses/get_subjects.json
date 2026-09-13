@@ -2,7 +2,7 @@ curl -X 'GET' \
   'https://bdl.stat.gov.pl/api/v1/subjects?page=0&page-size=10' \
   -H 'accept: application/json'
 
-  {
+{
   "totalRecords": 33,
   "page": 0,
   "pageSize": 10,
@@ -195,4 +195,4 @@ curl -X 'GET' \
       ]
     }
   ]
-}-
+}
