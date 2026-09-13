@@ -1,0 +1,829 @@
+curl -X 'GET' \
+  'https://bdl.stat.gov.pl/api/v1/data/by-variable/218207?aggregate-id=1&page=0&page-size=10' \
+  -H 'accept: application/json'
+
+{
+  "totalRecords": 41,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/data/by-variable/218207?aggregate-id=1&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/data/by-variable/218207?aggregate-id=1&page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/data/by-variable/218207?aggregate-id=1&page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/data/by-variable/218207?aggregate-id=1&page=4&page-size=10"
+  },
+  "variableId": 218207,
+  "measureUnitId": 4,
+  "aggregateId": 1,
+  "lastUpdate": null,
+  "results": [
+    {
+      "id": "000000000000",
+      "name": "POLSKA",
+      "values": [
+        {
+          "year": "2012",
+          "val": 78.25,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 102.5,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 75.76,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 70.99,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 66.87,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 65.64,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 67.03,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 83.26,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 72.21,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 87.88,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 127.94,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 134.57,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 85.37,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 91.52,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 74.91,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "010000000000",
+      "name": "MAKROREGION POŁUDNIOWY",
+      "values": [
+        {
+          "year": "2012",
+          "val": 72.9,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 99.74,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 75.09,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 66.08,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 64.72,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 62.84,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 67.2,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 79.88,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 68.38,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 84.76,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 126.2,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 129.67,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 77.21,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 91.7,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 72.45,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "011200000000",
+      "name": "MAŁOPOLSKIE",
+      "values": [
+        {
+          "year": "2012",
+          "val": 65.2,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 98.03,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 74.36,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 62.04,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 64.1,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 61.38,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 66.09,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 82.21,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 67.97,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 87.13,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 126,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 131.62,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 79.18,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 91.87,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 72.79,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "011210000000",
+      "name": "REGION MAŁOPOLSKIE",
+      "values": [
+        {
+          "year": "2012",
+          "val": 65.2,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 98.03,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 74.36,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 62.04,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 64.1,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 61.38,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 66.09,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 82.21,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 67.97,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 87.13,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 126,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 131.62,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 79.18,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 91.87,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 72.79,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "012400000000",
+      "name": "ŚLĄSKIE",
+      "values": [
+        {
+          "year": "2012",
+          "val": 74.55,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 100.16,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 75.23,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 67.17,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 65.05,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 63.57,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 67.47,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 79.06,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 68.6,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 82.76,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 126.3,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 127.86,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 76.17,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 91.61,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 72.09,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "012410000000",
+      "name": "REGION ŚLĄSKIE",
+      "values": [
+        {
+          "year": "2012",
+          "val": 74.55,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 100.16,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 75.23,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 67.17,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 65.05,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 63.57,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 67.47,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 79.06,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 68.6,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 82.76,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 126.3,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 127.86,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 76.17,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 91.61,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 72.09,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "020000000000",
+      "name": "MAKROREGION PÓŁNOCNO-ZACHODNI",
+      "values": [
+        {
+          "year": "2012",
+          "val": 79.14,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 102.77,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 77.06,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 73.08,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 68.48,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 67.49,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 66.95,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 83.64,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 72.67,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 88.11,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 127.13,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 137.18,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 87.9,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 92.04,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 75.52,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "020800000000",
+      "name": "LUBUSKIE",
+      "values": [
+        {
+          "year": "2012",
+          "val": 76.82,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 99.07,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 77.32,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 68.85,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 67.89,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 66.85,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 66.47,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 80.73,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 69.22,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 87.75,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 124.61,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 151.08,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 91.52,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 94.41,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 77.73,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "020810000000",
+      "name": "REGION LUBUSKIE",
+      "values": [
+        {
+          "year": "2012",
+          "val": 76.82,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 99.07,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 77.32,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 68.85,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 67.89,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 66.85,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 66.47,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 80.73,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 69.22,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 87.75,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 124.61,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 151.08,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 91.52,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 94.41,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 77.73,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "023000000000",
+      "name": "WIELKOPOLSKIE",
+      "values": [
+        {
+          "year": "2012",
+          "val": 80.44,
+          "attrId": 1
+        },
+        {
+          "year": "2013",
+          "val": 102.93,
+          "attrId": 1
+        },
+        {
+          "year": "2014",
+          "val": 77.08,
+          "attrId": 1
+        },
+        {
+          "year": "2015",
+          "val": 71.07,
+          "attrId": 1
+        },
+        {
+          "year": "2016",
+          "val": 68.18,
+          "attrId": 1
+        },
+        {
+          "year": "2017",
+          "val": 67.27,
+          "attrId": 1
+        },
+        {
+          "year": "2018",
+          "val": 67.51,
+          "attrId": 1
+        },
+        {
+          "year": "2019",
+          "val": 84.66,
+          "attrId": 1
+        },
+        {
+          "year": "2020",
+          "val": 72.52,
+          "attrId": 1
+        },
+        {
+          "year": "2021",
+          "val": 87.51,
+          "attrId": 1
+        },
+        {
+          "year": "2022",
+          "val": 126,
+          "attrId": 1
+        },
+        {
+          "year": "2023",
+          "val": 134.65,
+          "attrId": 1
+        },
+        {
+          "year": "2024",
+          "val": 86.25,
+          "attrId": 1
+        },
+        {
+          "year": "2025",
+          "val": 91.42,
+          "attrId": 1
+        },
+        {
+          "year": "2026",
+          "val": 74.38,
+          "attrId": 1
+        }
+      ]
+    }
+  ]
+}

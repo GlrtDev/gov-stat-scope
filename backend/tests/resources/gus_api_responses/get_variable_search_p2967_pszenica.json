@@ -1,0 +1,107 @@
+curl -X 'GET' \
+  'https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P2967&name=pszenica&page=0&page-size=10' \
+  -H 'accept: application/json'
+
+{
+  "totalRecords": 20,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P2967&name=pszenica&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P2967&name=pszenica&page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P2967&name=pszenica&page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P2967&name=pszenica&page=1&page-size=10"
+  },
+  "results": [
+    {
+      "id": 218207,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218208,
+      "subjectId": "P2967",
+      "n1": "luty",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218209,
+      "subjectId": "P2967",
+      "n1": "marzec",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218210,
+      "subjectId": "P2967",
+      "n1": "1 kwartał",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218211,
+      "subjectId": "P2967",
+      "n1": "kwiecień",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218212,
+      "subjectId": "P2967",
+      "n1": "maj",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218213,
+      "subjectId": "P2967",
+      "n1": "czerwiec",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218214,
+      "subjectId": "P2967",
+      "n1": "2 kwartał",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218204,
+      "subjectId": "P2967",
+      "n1": "pierwsze półrocze",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218215,
+      "subjectId": "P2967",
+      "n1": "lipiec",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+curl -X 'GET' \
+  'https://bdl.stat.gov.pl/api/v1/variables?subject-id=P2967&year=2020&page=0&page-size=10' \
+  -H 'accept: application/json'
+
+{
+  "totalRecords": 220,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/variables?subject-id=P2967&year=2020&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/variables?subject-id=P2967&year=2020&page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/variables?subject-id=P2967&year=2020&page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/variables?subject-id=P2967&year=2020&page=21&page-size=10"
+  },
+  "results": [
+    {
+      "id": 218207,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziarno zbóż (bez siewnego) - pszenica za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218187,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziarno zbóż (bez siewnego) - żyto za 1dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 283986,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziarno zbóż (bez siewnego) - jęczmień za 1dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 284006,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziarno zbóż (bez siewnego) - pszenżyto za 1dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 284026,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziarno zbóż (bez siewnego) - owies za 1dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 284046,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziarno zbóż (bez siewnego) - kukurydza za 1dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218167,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "ziemniaki za 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218147,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "żywiec rzeźny - bydło (bez cieląt) za 1 kg wagi żywej",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218267,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "żywiec rzeźny - trzoda chlewna za 1 kg wagi żywej",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 218247,
+      "subjectId": "P2967",
+      "n1": "styczeń",
+      "n2": "żywiec rzeźny - drób za 1 kg wagi żywej",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    }
+  ]
+}

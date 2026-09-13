@@ -1,0 +1,198 @@
+curl -X 'GET' \
+  'https://bdl.stat.gov.pl/api/v1/subjects?page=0&page-size=10' \
+  -H 'accept: application/json'
+
+  {
+  "totalRecords": 33,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/subjects?page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?page=3&page-size=10"
+  },
+  "results": [
+    {
+      "id": "K15",
+      "name": "CENY",
+      "hasVariables": false,
+      "children": [
+        "G186",
+        "G187",
+        "G188",
+        "G189",
+        "G405"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "K43",
+      "name": "FINANSE PRZEDSIĘBIORSTW (DANE KWARTALNE)",
+      "hasVariables": false,
+      "children": [
+        "G418",
+        "G576"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "K27",
+      "name": "FINANSE PUBLICZNE",
+      "hasVariables": false,
+      "children": [
+        "G195",
+        "G197",
+        "G199",
+        "G201",
+        "G423",
+        "G425",
+        "G497",
+        "G569"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K47",
+      "name": "FUNDUSZE UNIJNE (DANE PÓŁROCZNE)",
+      "hasVariables": false,
+      "children": [
+        "G556",
+        "G580",
+        "G586",
+        "G587",
+        "G588",
+        "G589",
+        "G590",
+        "G608",
+        "G624",
+        "G663",
+        "G665",
+        "G667"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K11",
+      "name": "GOSPODARKA MIESZKANIOWA I KOMUNALNA",
+      "hasVariables": false,
+      "children": [
+        "G57",
+        "G59",
+        "G231",
+        "G233",
+        "G236",
+        "G335",
+        "G402",
+        "G562",
+        "G619",
+        "G621",
+        "G630"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K44",
+      "name": "GOSPODARKA SPOŁECZNA",
+      "hasVariables": false,
+      "children": [
+        "G446",
+        "G568",
+        "G629"
+      ],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "K16",
+      "name": "HANDEL I GASTRONOMIA",
+      "hasVariables": false,
+      "children": [
+        "G64",
+        "G65",
+        "G66",
+        "G67",
+        "G190",
+        "G566"
+      ],
+      "levels": [
+        3,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K28",
+      "name": "INWESTYCJE I ŚRODKI TRWAŁE",
+      "hasVariables": false,
+      "children": [
+        "G277",
+        "G278",
+        "G438",
+        "G539",
+        "G567"
+      ],
+      "levels": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": "K23",
+      "name": "KULTURA ",
+      "hasVariables": false,
+      "children": [
+        "G226",
+        "G227",
+        "G228",
+        "G229",
+        "G370",
+        "G533",
+        "G617",
+        "G653"
+      ],
+      "levels": [
+        3,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K24",
+      "name": "KULTURA FIZYCZNA, SPORT I REKREACJA",
+      "hasVariables": false,
+      "children": [
+        "G334",
+        "G662"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  ]
+}-

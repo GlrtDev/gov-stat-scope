@@ -1,0 +1,24 @@
+curl -X 'GET' \
+  'https://bdl.stat.gov.pl/api/v1/data/by-variable/218207?year=2017&unit-level=0&aggregate-id=1&page=0&page-size=10' \
+  -H 'accept: application/json'
+
+{
+  "totalRecords": 1,
+  "variableId": 218207,
+  "measureUnitId": 4,
+  "aggregateId": 1,
+  "lastUpdate": null,
+  "results": [
+    {
+      "id": "000000000000",
+      "name": "POLSKA",
+      "values": [
+        {
+          "year": "2017",
+          "val": 65.64,
+          "attrId": 1
+        }
+      ]
+    }
+  ]
+}

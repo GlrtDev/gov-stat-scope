@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+from difflib import SequenceMatcher
 import json
 import logging
 import os
@@ -102,6 +103,11 @@ def _normalize_text(value: str) -> str:
 
     return re.sub(r"\s+", " ", text).strip()
 
+def _normalize_polish_search(text: str) -> str:
+    """Lowercase and trim, but preserve Polish diacritics for GUS search."""
+    if not isinstance(text, str):
+        return ""
+    return re.sub(r"\s+", " ", text.strip().lower())
 
 def _first_present(mapping: Dict[str, Any], *keys: str, default: Any = None) -> Any:
     """Return the first non-None value from a mapping using possible field aliases."""
@@ -134,6 +140,24 @@ def _extract_results(payload: Any) -> List[Dict[str, Any]]:
 
     return []
 
+
+def _variable_matches(name: str, query: str) -> bool:
+    if not name or not query:
+        return False
+    if query in name or name in query:
+        return True
+
+    query_tokens = {t for t in query.split() if len(t) > 2}
+    name_tokens = {t for t in name.split() if len(t) > 2}
+
+    if query_tokens & name_tokens:
+        return True
+
+    return any(
+        SequenceMatcher(None, qt, nt).ratio() >= 0.8
+        for qt in query_tokens
+        for nt in name_tokens
+    )
 
 class _TTLCache:
     """Small bounded TTL cache for metadata lookups."""
@@ -178,26 +202,32 @@ class GUSClient(DataSourceClient):
 
     BASE_URL = "https://bdl.stat.gov.pl/api/v1/"
 
-    def __init__(self) -> None:
-        raw_api_key = os.getenv("GUS_API_KEY") or os.getenv("GUS_CLIENT_ID")
-        api_key = _normalize_gus_api_key(raw_api_key)
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        transport: Optional[httpx.AsyncBaseTransport] = None,
+    ) -> None:
+        raw_api_key = api_key or os.getenv("GUS_API_KEY") or os.getenv("GUS_CLIENT_ID")
+        resolved_api_key = _normalize_gus_api_key(raw_api_key)
 
-        if raw_api_key is not None and api_key is None:
+        if raw_api_key is not None and resolved_api_key is None:
             logger.warning(
-                "GUS API key looks like a placeholder or dummy value. Continuing without X-ClientId authentication."
+                "GUS API key looks like a placeholder or dummy value. "
+                "Using unauthenticated low-rate access. Set a real GUS_API_KEY/GUS_CLIENT_ID."
             )
 
         headers: Dict[str, str] = {
             "Accept": "application/json",
             "User-Agent": "GovStatScope-GUS-Adapter/1.0",
         }
-        if api_key:
-            headers["X-ClientId"] = api_key
+        if resolved_api_key:
+            headers["X-ClientId"] = resolved_api_key
 
         self.client = httpx.AsyncClient(
             base_url=self.BASE_URL,
             headers=headers,
-            timeout=httpx.Timeout(30.0, connect=10.0),
+            timeout=httpx.Timeout(30.0),
+            transport=transport,
         )
 
         self.page_size = 100
@@ -444,62 +474,95 @@ class GUSClient(DataSourceClient):
 
         return score
 
-    async def _search_variable_candidates(self, query: str) -> List[Dict[str, Any]]:
-        """Search GUS variables with caching and bounded pagination."""
-        normalized_query = _normalize_text(query)
-        if not normalized_query:
+    async def _search_variable_candidates(
+    self,
+    query: str,
+    subject_id: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    # GUS requires native Polish spelling here, not ASCII-folded text.
+        search_query = _normalize_polish_search(query)
+
+        if not search_query:
             raise GUSNotFoundError("GUS variable query is empty.")
 
-        cache_key = f"search:{normalized_query}"
-        cached = self._variable_search_cache.get(cache_key)
+        cache_key = f"variable_search:{subject_id or 'all'}:{search_query}"
+        cached = self._cache.get(cache_key)
         if cached is not None:
             return list(cached)
 
-        for param_name in ("name", "name-en"):
-            collected = await self._fetch_paginated_items(
-                endpoint="variables/search",
-                params={param_name: query},
-                max_items=200,
-            )
+        params = {
+            "search": search_query,
+            "lang": "pl",
+            "format": "json",
+        }
 
-            if collected:
-                unique = self._dedupe_by_id(collected)
-                self._variable_search_cache.set(cache_key, unique)
-                return unique
+        if subject_id is not None:
+            params["subjectId"] = str(subject_id)
 
-        self._variable_search_cache.set(cache_key, [])
-        return []
+        payload = await self._get_all_pages("variables/search", params)
+        results = _extract_results(payload)
+        results = self._dedupe_by_id(results)
 
-    async def _resolve_variable_id(self, query: str) -> str:
+        self._cache.set(cache_key, results)
+        return list(results)
+
+    async def resolve_variable_id(self, query: str, **kwargs: Any) -> str:
         """Resolve a natural-language metric phrase to the best GUS variable ID."""
         normalized_query = _normalize_text(query)
+
         if not normalized_query:
             raise GUSNotFoundError("GUS variable query is empty.")
 
-        cache_key = f"resolved:{normalized_query}"
-        cached_id = self._resolved_variable_cache.get(cache_key)
+        cache_key = f"variable_id:{normalized_query}"
+        cached_id = self._cache.get(cache_key)
+
         if cached_id is not None:
             return str(cached_id)
 
+        def pick_best(candidates: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+            best = None
+            best_score = 0
+
+            for candidate in candidates:
+                score = self._score_candidate(normalized_query, candidate)
+
+                if score > best_score:
+                    best_score = score
+                    best = candidate
+
+            return best if best_score > 0 else None
+
+        # 1. Subject-aware search:
+        #    /subjects -> /subjects/K15 -> /subjects/G186
+        subject_id, remaining_query = await self._find_subject_and_remaining(query)
+
+        if subject_id:
+            candidates = await self._search_variable_candidates(
+                remaining_query or query,
+                subject_id=subject_id,
+            )
+
+            best = pick_best(candidates)
+
+            if best is not None:
+                variable_id = str(_first_present(best, "id", default=""))
+
+                if variable_id:
+                    self._cache.set(cache_key, variable_id)
+                    return variable_id
+
+        # 2. Fallback: direct full-query search.
         candidates = await self._search_variable_candidates(query)
-        best_id: Optional[int] = None
-        best_score = -1
+        best = pick_best(candidates)
 
-        for candidate in candidates:
-            candidate_id = _parse_int(_first_present(candidate, "id"))
-            if candidate_id is None:
-                continue
+        if best is not None:
+            variable_id = str(_first_present(best, "id", default=""))
 
-            score = self._score_candidate(normalized_query, candidate)
-            if score > best_score:
-                best_score = score
-                best_id = candidate_id
+            if variable_id:
+                self._cache.set(cache_key, variable_id)
+                return variable_id
 
-        if best_id is None or best_score <= 0:
-            raise GUSNotFoundError(f"No GUS variable found matching query: {query}")
-
-        self._resolved_variable_cache.set(cache_key, str(best_id))
-        return str(best_id)
+        raise GUSNotFoundError(f"No GUS variable found matching query: {query}")
 
     async def _find_unit_in_level(self, name: str, level: int) -> Optional[Dict[str, Any]]:
         """Fallback unit resolver that scans a single administrative level."""
@@ -904,4 +967,300 @@ class GUSClient(DataSourceClient):
             region=region_name,
             time_period=time_period,
             values=data_points,
+        )
+
+
+    async def _cached_subjects(self, parent_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        cache_key = f"subjects:{parent_id or 'root'}"
+        cached = self._cache.get(cache_key)
+
+        if cached is not None:
+            return list(cached)
+
+        endpoint = "subjects" if parent_id is None else f"subjects/{parent_id}"
+        payload = await self._get_all_pages(
+            endpoint,
+            {"lang": "pl", "format": "json"},
+        )
+
+        subjects = _extract_results(payload)
+        self._cache.set(cache_key, subjects)
+
+        return list(subjects)
+
+
+    async def _find_subject_and_remaining(self, query: str) -> Tuple[Optional[str], str]:
+        """
+        Walk the GUS subject hierarchy:
+
+            /subjects
+            /subjects/K15
+            /subjects/G186
+
+        and return:
+            (deepest_subject_id, remaining_query_terms)
+        """
+        raw_query = query.strip()
+        if not raw_query:
+            return None, ""
+
+        stopwords = {
+            "w", "na", "dla", "od", "do", "i", "oraz", "o", "z", "ze", "we",
+            "wpolsce", "polsce", "polska", "lata", "rok", "dane",
+        }
+
+        raw_tokens = re.findall(r"\S+", raw_query.lower())
+        remaining_norm_tokens = {
+            _normalize_text(tok)
+            for tok in raw_tokens
+            if _normalize_text(tok) not in stopwords
+        }
+
+        if not remaining_norm_tokens:
+            return None, raw_query
+
+        parent_id: Optional[str] = None
+        consumed_norm_tokens: set = set()
+
+        while True:
+            subjects = await self._cached_subjects(parent_id)
+            if not subjects:
+                break
+
+            best_subject = None
+            best_score = 0
+            best_consumed: set = set()
+            best_name_length = 0
+
+            for subject in subjects:
+                name_raw = str(_first_present(subject, "name", "name-en", default=""))
+                name_norm = _normalize_text(name_raw)
+
+                if not name_norm:
+                    continue
+
+                name_tokens = set(re.findall(r"[a-z0-9]+", name_norm)) - stopwords
+
+                if not name_tokens:
+                    continue
+
+                matched: set = set()
+
+                for query_token in remaining_norm_tokens:
+                    if query_token in name_tokens:
+                        matched.add(query_token)
+                        continue
+
+                    for name_token in name_tokens:
+                        # Handle Polish inflection reasonably:
+                        # "pszenicy" vs "pszenica", "rolnictwie" vs "rolnictwo"
+                        if len(name_token) >= 4 and (
+                            query_token.startswith(name_token)
+                            or name_token.startswith(query_token)
+                        ):
+                            matched.add(query_token)
+                            break
+
+                score = len(matched)
+
+                if score > best_score or (
+                    score == best_score
+                    and len(name_tokens) > best_name_length
+                ):
+                    best_subject = subject
+                    best_score = score
+                    best_consumed = matched
+                    best_name_length = len(name_tokens)
+
+            if best_subject is None or best_score == 0:
+                break
+
+            best_id = str(_first_present(best_subject, "id", default=""))
+            if not best_id:
+                break
+
+            parent_id = best_id
+            remaining_norm_tokens -= best_consumed
+            consumed_norm_tokens |= best_consumed
+
+        remaining_raw_tokens = []
+
+        for token in raw_tokens:
+            norm_token = _normalize_text(token)
+
+            if norm_token in consumed_norm_tokens or norm_token in stopwords:
+                continue
+
+            remaining_raw_tokens.append(token)
+
+        return parent_id, " ".join(remaining_raw_tokens)
+
+
+    async def query_data(
+    self,
+    query: str,
+    region: Optional[str] = None,
+    years: Any = None,
+    **kwargs: Any ) -> NormalizedSeries:
+        """Resolve a natural-language GUS query and return a normalized series."""
+        variable = await self.resolve_variable(query, **kwargs)
+
+        if isinstance(variable, dict):
+            variable_id = int(
+                variable.get("id")
+                or variable.get("variableId")
+                or variable.get("variable_id")
+                or 0
+            )
+        else:
+            variable_id = int(variable or 0)
+
+        if not variable_id:
+            raise GUSNotFoundError(f"No GUS variable found for query: {query}")
+
+        year_values = years if years not in (None, [], "") else query
+        year_list = self._coerce_years(year_values)
+
+        if not year_list:
+            raise GUSNotFoundError(f"No year found in query: {query}")
+
+        unit_level = 0
+        resolved_region = region or "Poland"
+
+        if region:
+            unit = await self.resolve_unit(region)
+            unit_level = int(unit.get("level", 0) or 0)
+
+        return await self.fetch_data(
+            variable_id=variable_id,
+            unit_level=unit_level,
+            years=year_list,
+            region=resolved_region,
+            **kwargs,
+        )
+
+    @staticmethod
+    def _coerce_years(years: Any) -> List[int]:
+        """Return a sorted list of unique years from various input forms."""
+        if years is None:
+            return []
+
+        if isinstance(years, int):
+            return [years]
+
+        if isinstance(years, str):
+            matches = re.findall(r"(?:18|19|20)\d{2}", years)
+            return sorted({int(year) for year in matches})
+
+        return sorted({int(year) for year in years if year is not None})
+
+
+    async def resolve_variable_id(self, query: str, **kwargs: Any) -> str:
+        """Return the numeric GUS variable id for a query."""
+        result = await self.resolve_variable(query, **kwargs)
+        return str(result["id"])
+
+    async def resolve_variable(self, query: str, **kwargs: Any) -> Dict[str, Any]:
+        """Resolve a GUS variable by numeric id or Polish name."""
+        q = str(query or "").strip()
+        if not q:
+            raise GUSNotFoundError("Variable query is empty.")
+
+        if q.isdigit():
+            return {"id": q, "name": q}
+
+        # Never strip Polish diacritics in the API query.
+        try:
+            response = await self._request(
+                "GET",
+                "variables",
+                params={"query": q, "lang": "pl"},
+            )
+            candidates = self._extract_results(response)
+            best = self._pick_best_variable(candidates, q)
+            if best is not None:
+                return {
+                    "id": str(best["id"]),
+                    "name": str(_first_present(best, "name", default=q)),
+                }
+        except (GUSNotFoundError, GUSAOError):
+            pass
+
+        return await self._resolve_variable_via_subjects(q, **kwargs)
+
+    def _extract_results(self, response: Any) -> List[Dict[str, Any]]:
+        if isinstance(response, list):
+            return [r for r in response if isinstance(r, dict)]
+        if isinstance(response, dict):
+            for key in ("results", "values", "data"):
+                value = response.get(key)
+                if isinstance(value, list):
+                    return [r for r in value if isinstance(r, dict)]
+        return []
+
+    def _pick_best_variable(
+        self, candidates: List[Dict[str, Any]], query: str
+    ) -> Optional[Dict[str, Any]]:
+        normalized_query = _normalize_text(query)
+        best: Optional[Dict[str, Any]] = None
+        best_score = 0.0
+
+        for candidate in candidates:
+            name = str(_first_present(candidate, "name", default=""))
+            if not name:
+                continue
+            score = SequenceMatcher(
+                None, _normalize_text(name), normalized_query
+            ).ratio()
+            if score > best_score:
+                best_score = score
+                best = candidate
+
+        return best if best_score >= 0.45 else None
+
+    async def _resolve_variable_via_subjects(
+        self, query: str, **kwargs: Any
+    ) -> Dict[str, Any]:
+        normalized_query = _normalize_text(query)
+        top_level = await self._get_all_pages("subjects")
+        queue = self._extract_results(top_level)
+        seen: set[str] = set()
+        visited = 0
+
+        while queue and visited < 500:
+            subject = queue.pop(0)
+            subject_id = str(subject.get("id") or "")
+            if not subject_id or subject_id in seen:
+                continue
+            seen.add(subject_id)
+            visited += 1
+
+            try:
+                variables_payload = await self._get_all_pages(
+                    f"subjects/{subject_id}/variables"
+                )
+                variables = self._extract_results(variables_payload)
+            except GUSNotFoundError:
+                variables = []
+
+            for variable in variables:
+                variable_id = str(
+                    _first_present(variable, "id", "variableId", default="")
+                )
+                name = str(_first_present(variable, "name", default=""))
+                if variable_id and _variable_matches(
+                    _normalize_text(name), normalized_query
+                ):
+                    return {"id": variable_id, "name": name}
+
+            try:
+                children_payload = await self._get_all_pages(
+                    f"subjects/{subject_id}/subjects"
+                )
+                queue.extend(self._extract_results(children_payload))
+            except GUSNotFoundError:
+                pass
+
+        raise GUSNotFoundError(
+            f"No GUS variable found matching query: {query}"
         )

@@ -18,7 +18,7 @@ bash ./scripts/test.sh all
 ```
 # Run a single test file using the PowerShell script (Windows)
 ```
-.\scripts\test.ps1 -TestType single -TestPath "tests\integration\test_dynamodb.py"
+.\scripts\test.ps1 -TestType single -TestPath "tests\integration\test_gus_deep_flow.py"
 ```
 
 
