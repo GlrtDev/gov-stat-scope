@@ -1,0 +1,93 @@
+{
+  "totalRecords": 19,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P1458&page=0&page-size=10&format=json",
+    "self": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P1458&page=0&page-size=10&format=json",
+    "next": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P1458&page=1&page-size=10&format=json",
+    "last": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P1458&page=1&page-size=10&format=json"
+  },
+  "results": [
+    {
+      "id": 4859,
+      "subjectId": "P1458",
+      "n1": "pszenica 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4860,
+      "subjectId": "P1458",
+      "n1": "żyto 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4861,
+      "subjectId": "P1458",
+      "n1": "jęczmień 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4862,
+      "subjectId": "P1458",
+      "n1": "owies i mieszanki zbożowe 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4863,
+      "subjectId": "P1458",
+      "n1": "pszenżyto 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4864,
+      "subjectId": "P1458",
+      "n1": "ziemniaki 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4865,
+      "subjectId": "P1458",
+      "n1": "ziemniaki jadalne 1 dt (bez wczesnych)",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4866,
+      "subjectId": "P1458",
+      "n1": "ziemniaki przemysłowe 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4867,
+      "subjectId": "P1458",
+      "n1": "buraki cukrowe 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 4868,
+      "subjectId": "P1458",
+      "n1": "rzepak i rzepik przemysłowy 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    }
+  ]
+}

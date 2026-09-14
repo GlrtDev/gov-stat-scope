@@ -1,0 +1,68 @@
+{
+  "totalRecords": 7,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P3415&page=0&page-size=10&format=json",
+    "self": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P3415&page=0&page-size=10&format=json",
+    "last": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P3415&page=0&page-size=10&format=json"
+  },
+  "results": [
+    {
+      "id": 450364,
+      "subjectId": "P3415",
+      "n1": "grunty orne ogółem",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 450363,
+      "subjectId": "P3415",
+      "n1": "grunty orne dobre (klasy I, II, IIIa)",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 450362,
+      "subjectId": "P3415",
+      "n1": "grunty orne średnie (klasy IIIb, IV)",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 450361,
+      "subjectId": "P3415",
+      "n1": "grunty orne słabe (klasy V, VI)",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 450360,
+      "subjectId": "P3415",
+      "n1": "łąki ogółem",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 450359,
+      "subjectId": "P3415",
+      "n1": "łąki dobre",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    },
+    {
+      "id": 450358,
+      "subjectId": "P3415",
+      "n1": "łąki słabe",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    }
+  ]
+}

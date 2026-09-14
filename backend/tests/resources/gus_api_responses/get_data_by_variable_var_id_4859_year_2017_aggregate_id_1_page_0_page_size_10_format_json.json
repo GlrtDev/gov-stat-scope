@@ -1,0 +1,125 @@
+{
+  "totalRecords": 41,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/data/by-variable/4859?year=2017&aggregate-id=1&page=0&page-size=10&format=json",
+    "self": "https://bdl.stat.gov.pl/api/v1/data/by-variable/4859?year=2017&aggregate-id=1&page=0&page-size=10&format=json",
+    "next": "https://bdl.stat.gov.pl/api/v1/data/by-variable/4859?year=2017&aggregate-id=1&page=1&page-size=10&format=json",
+    "last": "https://bdl.stat.gov.pl/api/v1/data/by-variable/4859?year=2017&aggregate-id=1&page=4&page-size=10&format=json"
+  },
+  "variableId": 4859,
+  "measureUnitId": 4,
+  "aggregateId": 1,
+  "lastUpdate": null,
+  "results": [
+    {
+      "id": "000000000000",
+      "name": "POLSKA",
+      "values": [
+        {
+          "year": "2017",
+          "val": 66.44,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "010000000000",
+      "name": "MAKROREGION POŁUDNIOWY",
+      "values": [
+        {
+          "year": "2017",
+          "val": 65.24,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "011200000000",
+      "name": "MAŁOPOLSKIE",
+      "values": [
+        {
+          "year": "2017",
+          "val": 63.96,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "011210000000",
+      "name": "REGION MAŁOPOLSKIE",
+      "values": [
+        {
+          "year": "2017",
+          "val": 63.96,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "012400000000",
+      "name": "ŚLĄSKIE",
+      "values": [
+        {
+          "year": "2017",
+          "val": 65.92,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "012410000000",
+      "name": "REGION ŚLĄSKIE",
+      "values": [
+        {
+          "year": "2017",
+          "val": 65.92,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "020000000000",
+      "name": "MAKROREGION PÓŁNOCNO-ZACHODNI",
+      "values": [
+        {
+          "year": "2017",
+          "val": 66.63,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "020800000000",
+      "name": "LUBUSKIE",
+      "values": [
+        {
+          "year": "2017",
+          "val": 65.76,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "020810000000",
+      "name": "REGION LUBUSKIE",
+      "values": [
+        {
+          "year": "2017",
+          "val": 65.76,
+          "attrId": 1
+        }
+      ]
+    },
+    {
+      "id": "023000000000",
+      "name": "WIELKOPOLSKIE",
+      "values": [
+        {
+          "year": "2017",
+          "val": 67.22,
+          "attrId": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "totalRecords": 1,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P1458&name=pszenica&page=0&page-size=10&format=json",
+    "self": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P1458&name=pszenica&page=0&page-size=10&format=json",
+    "last": "https://bdl.stat.gov.pl/api/v1/variables/search?subject-id=P1458&name=pszenica&page=0&page-size=10&format=json"
+  },
+  "results": [
+    {
+      "id": 4859,
+      "subjectId": "P1458",
+      "n1": "pszenica 1 dt",
+      "level": 3,
+      "measureUnitId": 4,
+      "measureUnitName": "zł"
+    }
+  ]
+}

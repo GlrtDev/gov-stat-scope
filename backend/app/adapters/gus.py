@@ -313,10 +313,8 @@ class GUSClient(DataSourceClient):
             "pageSize": DEFAULT_PAGE_SIZE,
         }
 
-    async def _fetch_subjects(
-        self,
-        parent_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+    async def fetch_subjects(self, parent_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Fetch top-level or child subjects from GUS API. Public method for LLM-guided resolution."""
         cache_key = f"subjects:{parent_id or 'root'}"
         cached = self._subject_cache.get(cache_key)
         if cached is not None:
@@ -326,6 +324,30 @@ class GUSClient(DataSourceClient):
         data = await self._request("GET", path)
         results = _extract_results(data)
         self._subject_cache.set(cache_key, results)
+        return results
+
+    async def fetch_variables_for_subject(
+        self,
+        subject_id: str,
+        search_term: Optional[str] = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+    ) -> List[Dict[str, Any]]:
+        """Fetch variables for a given subject ID. Public method for LLM-guided resolution."""
+        params: Dict[str, Any] = {
+            "subject-id": subject_id,
+            "page-size": page_size,
+        }
+        if search_term:
+            params["name"] = _api_search_text(search_term)
+
+        cache_key = f"vars:{subject_id}:{_normalize_text(search_term or 'all')}"
+        cached = self._variable_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        data = await self._get_all_pages("variables/search", params=params)
+        results = _extract_results(data)
+        self._variable_cache.set(cache_key, results)
         return results
 
     async def _fetch_units(
@@ -346,80 +368,39 @@ class GUSClient(DataSourceClient):
         self._subject_cache.set(cache_key, results)
         return results
 
-    def _domain_hints(self, query: str) -> List[str]:
-        q = _normalize_text(query)
-        hints: List[str] = []
+    async def resolve_query(self, query: str) -> str:
+        """Legacy compatibility method. Redirects to local resolution via cached variable ID."""
+        return await self._resolve_variable_id(query)
 
-        if (
-            "cen" in q
-            or "koszt" in q
-            or "price" in q
-            or "cost" in q
-        ):
-            hints.append("cen")
+    async def _resolve_variable_id(self, query: str) -> str:
+        cache_key = f"varid:{_normalize_text(query)}"
+        cached = self._variable_id_cache.get(cache_key)
+        if cached is not None:
+            return str(cached)
 
-        if (
-            "roln" in q
-            or "pszen" in q
-            or "zboz" in q
-            or "agri" in q
-        ):
-            hints.append("roln")
+        # Simple fallback: search across all subjects using repository endpoint
+        try:
+            data = await self._get_all_pages("variables", params={"search": _api_search_text(query)})
+            variables = _extract_results(data)
+            if not variables:
+                raise GUSNotFoundError(f"GUS variable not found for query '{query}'")
 
-        if (
-            "ludn" in q
-            or "popul" in q
-            or "mieszk" in q
-            or "demograf" in q
-        ):
-            hints.append("ludn")
+            best_variable = max(
+                variables,
+                key=lambda v: self._score_variable(v, query),
+                default=None,
+            )
+            if best_variable is None:
+                raise GUSNotFoundError(f"GUS variable not found for query '{query}'")
 
-        if (
-            "prac" in q
-            or "wynagr" in q
-            or "bezrob" in q
-            or "zatrudn" in q
-        ):
-            hints.append("praca")
+            variable_id = str(_first_present(best_variable, "id", "variable-id", "variableId", default=""))
+            if not variable_id:
+                raise GUSNotFoundError(f"GUS variable ID missing for query '{query}'")
 
-        if "produkt" in q:
-            hints.append("produkt")
-
-        return hints
-
-    def _score_subject_for_query(
-        self,
-        subject: Dict[str, Any],
-        query: str,
-        hints: List[str],
-    ) -> int:
-        name = str(_first_present(subject, "name", "name-en", "title", default=""))
-        norm_name = _normalize_text(name)
-        query_norm = _normalize_text(query)
-
-        score = 0
-
-        # Hint-based scoring.
-        for hint in hints:
-            if hint in norm_name:
-                if hint == "roln":
-                    score += 250
-                elif hint == "cen":
-                    score += 300
-                else:
-                    score += 200
-
-        # Token overlap.
-        query_tokens = set(query_norm.split())
-        name_tokens = set(norm_name.split())
-        overlap = query_tokens & name_tokens
-        score += len(overlap) * 100
-
-        # Direct substring match.
-        if query_norm and (query_norm in norm_name or norm_name in query_norm):
-            score += 200
-
-        return score
+            self._variable_id_cache.set(cache_key, variable_id)
+            return variable_id
+        except GUSAOError as e:
+            raise GUSNotFoundError(f"GUS variable not found for query '{query}': {str(e)}")
 
     def _score_variable(
         self,
@@ -459,159 +440,6 @@ class GUSClient(DataSourceClient):
                     score += 50
 
         return score
-
-    async def _resolve_candidate_subjects(self, query: str) -> List[str]:
-        top_subjects = await self._fetch_subjects()
-        if not top_subjects:
-            return []
-
-        hints = self._domain_hints(query)
-
-        best_top = max(
-            top_subjects,
-            key=lambda s: self._score_subject_for_query(s, query, hints),
-            default=None,
-        )
-
-        if best_top is None:
-            return []
-
-        top_id = _subject_id(best_top)
-        if not top_id:
-            return []
-
-        children = await self._fetch_subjects(top_id)
-        if not children:
-            return [top_id]
-
-        best_child = max(
-            children,
-            key=lambda s: self._score_subject_for_query(s, query, hints),
-            default=None,
-        )
-
-        if best_child is None:
-            return [top_id]
-
-        child_id = _subject_id(best_child)
-        if not child_id:
-            return [top_id]
-
-        grandchildren = await self._fetch_subjects(child_id)
-        if not grandchildren:
-            return [child_id]
-
-        best_grandchild = max(
-            grandchildren,
-            key=lambda s: self._score_subject_for_query(s, query, hints),
-            default=None,
-        )
-
-        if best_grandchild is None:
-            return [child_id]
-
-        grandchild_id = _subject_id(best_grandchild)
-        if grandchild_id:
-            return [grandchild_id]
-
-        return [child_id]
-
-    async def _search_variables_in_subject(
-        self,
-        subject_id: str,
-        query: str,
-        page_size: int = DEFAULT_PAGE_SIZE,
-    ) -> List[Dict[str, Any]]:
-        search_term = _api_search_text(query)
-        params = {
-            "subject-id": subject_id,
-            "name": search_term,
-            "page-size": page_size,
-        }
-        cache_key = f"variables:{subject_id}:{_normalize_text(search_term)}"
-        cached = self._variable_cache.get(cache_key)
-        if cached is not None:
-            return cached
-
-        data = await self._get_all_pages("variables/search", params=params)
-        all_variables: List[Dict[str, Any]] = _extract_results(data)
-
-        filtered: List[Dict[str, Any]] = []
-        for variable in all_variables:
-            name = str(_first_present(variable, "name", "title", default=""))
-            if search_term.lower() in name.lower():
-                filtered.append(variable)
-
-        self._variable_cache.set(cache_key, filtered)
-        return filtered
-
-    async def _search_variables_across_subjects(
-        self,
-        query: str,
-    ) -> List[Dict[str, Any]]:
-        subject_ids = await self._resolve_candidate_subjects(query)
-
-        all_variables: List[Dict[str, Any]] = []
-
-        for subject_id in subject_ids:
-            variables = await self._search_variables_in_subject(subject_id, query)
-            all_variables.extend(variables)
-
-        if not all_variables:
-            # Fallback: search across all variables.
-            try:
-                params = {"search": _api_search_text(query)}
-                data = await self._get_all_pages("variables", params=params)
-                all_variables = _extract_results(data)
-            except GUSAOError:
-                pass
-
-        return all_variables
-
-    async def _resolve_variable_id(self, query: str) -> str:
-        cache_key = f"varid:{_normalize_text(query)}"
-        cached = self._variable_id_cache.get(cache_key)
-        if cached is not None:
-            return str(cached)
-
-        candidates = await self._search_variables_across_subjects(query)
-
-        if not candidates:
-            raise GUSNotFoundError(
-                f"GUS variable not found for query '{query}'"
-            )
-
-        best_variable = max(
-            candidates,
-            key=lambda v: self._score_variable(v, query),
-            default=None,
-        )
-
-        if best_variable is None:
-            raise GUSNotFoundError(
-                f"GUS variable not found for query '{query}'"
-            )
-
-        variable_id = str(
-            _first_present(
-                best_variable,
-                "id",
-                "variable-id",
-                "variableId",
-                default="",
-            )
-        )
-
-        if not variable_id:
-            raise GUSNotFoundError(
-                f"GUS variable ID missing for query '{query}'"
-            )
-
-        self._variable_id_cache.set(cache_key, variable_id)
-        return variable_id
-
-    async def resolve_query(self, query: str) -> str:
-        return await self._resolve_variable_id(query)
 
     def _unit_score(self, query: str, unit_name: str) -> int:
         query_norm = _normalize_text(query)
@@ -694,6 +522,54 @@ class GUSClient(DataSourceClient):
 
         return result
 
+    async def _get_unit_info(self, unit_id: str) -> Dict[str, Any]:
+        """Fetch a single GUS unit by id and cache the response."""
+        cache_key = f"unit:{unit_id}"
+        cached = self._subject_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        data = await self._request("GET", f"units/{unit_id}")
+        results = _extract_results(data)
+        if not results:
+            raise GUSNotFoundError(f"GUS unit not found for id '{unit_id}'")
+
+        unit = results[0]
+        self._subject_cache.set(cache_key, unit)
+        return unit
+
+    async def _resolve_unit_level(
+        self,
+        unit_id: Optional[str],
+        requested_level: Any,
+    ) -> int:
+        """Resolve the numeric GUS unit level used by data/by-variable."""
+        if requested_level is not None:
+            level = _parse_int(requested_level)
+            if level is None:
+                raise GUSAOError(
+                    f"Invalid GUS unit level: {requested_level!r}"
+                )
+            return level
+
+        if unit_id:
+            unit = await self._get_unit_info(unit_id)
+            level = _parse_int(
+                _first_present(
+                    unit,
+                    "level",
+                    "poziom",
+                    default=None,
+                )
+            )
+            if level is None:
+                raise GUSAOError(
+                    f"Could not determine unit level for unit '{unit_id}'"
+                )
+            return level
+
+        return 0
+
     async def fetch_data(
         self,
         variable_id: str,
@@ -701,26 +577,48 @@ class GUSClient(DataSourceClient):
     ) -> Dict[str, Any]:
         variable_id = str(variable_id)
         years = self._normalize_years(kwargs.get("years"))
+        year_start = kwargs.get("year_start")
+        year_end = kwargs.get("year_end")
 
-        unit_id = kwargs.get("unit_id") or kwargs.get("unitId")
-
-        if unit_id is None and kwargs.get("unit_level") is not None:
-            unit = await self.resolve_unit_for_level(
-                int(kwargs["unit_level"])
+        if year_start is not None and year_end is not None:
+            years = list(
+                range(
+                    _parse_int(year_start) or DEFAULT_YEAR,
+                    (_parse_int(year_end) or DEFAULT_YEAR) + 1,
+                )
             )
-            unit_id = _first_present(unit, "id", "unit-id", default="0")
+        elif year_start is not None:
+            years = [_parse_int(year_start) or DEFAULT_YEAR]
+        elif year_end is not None:
+            years = [DEFAULT_YEAR, _parse_int(year_end) or DEFAULT_YEAR]
 
-        if unit_id is None:
-            unit = await self.resolve_unit_for_level(0)
-            unit_id = _first_present(unit, "id", "unit-id", default="0")
+        unit_id_raw = (
+            kwargs.get("unit_id")
+            or kwargs.get("unitId")
+            or kwargs.get("unit-id")
+        )
+        unit_id = str(unit_id_raw) if unit_id_raw is not None else None
+        requested_level = kwargs.get("unit_level") or kwargs.get("unit-level")
 
-        unit_id = str(unit_id)
+        unit_level = await self._resolve_unit_level(
+            unit_id=unit_id,
+            requested_level=requested_level,
+        )
+
+        if unit_id is None and kwargs.get("region") is None:
+            try:
+                unit = await self.resolve_unit_for_level(unit_level)
+                unit_id = str(
+                    _first_present(unit, "id", "unit-id", default="")
+                )
+            except GUSNotFoundError:
+                unit_id = None
 
         results: List[Dict[str, Any]] = []
 
         for year in years:
             params = {
-                "unit-id": unit_id,
+                "unit-level": unit_level,
                 "year": year,
             }
             data = await self._get_all_pages(
@@ -733,8 +631,84 @@ class GUSClient(DataSourceClient):
             "results": results,
             "variable-id": variable_id,
             "unit-id": unit_id,
+            "unit-level": unit_level,
             "years": years,
         }
+
+    async def fetch_time_range(
+        self,
+        variable_id: str,
+        year_start: int,
+        year_end: int,
+        unit_id: Optional[str] = None,
+        unit_level: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Fetch data for a specific year range."""
+        kwargs: Dict[str, Any] = {
+            "variable_id": variable_id,
+            "year_start": year_start,
+            "year_end": year_end,
+        }
+        if unit_id:
+            kwargs["unit_id"] = unit_id
+        if unit_level is not None:
+            kwargs["unit_level"] = unit_level
+        return await self.fetch_data(**kwargs)
+
+    async def fetch_series(
+        self,
+        variable_id: str,
+        unit_level: int = 0,
+        years: Optional[Union[int, List[int]]] = None,
+    ) -> Dict[str, Any]:
+        return await self.fetch_data(
+            variable_id=variable_id,
+            unit_level=unit_level,
+            years=years,
+        )
+
+    def _select_result(
+        self,
+        results: List[Dict[str, Any]],
+        kwargs: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        if not results:
+            return {}
+
+        unit_id = kwargs.get("unit_id") or kwargs.get("unitId")
+        region = kwargs.get("region")
+
+        for result in results:
+            result_unit_id = str(
+                _first_present(
+                    result,
+                    "id",
+                    "unit-id",
+                    "unitId",
+                    default="",
+                )
+            )
+            if unit_id is not None and str(unit_id) == result_unit_id:
+                return result
+
+            if region:
+                unit_name = str(
+                    _first_present(
+                        result,
+                        "unit-name",
+                        "unitName",
+                        "name",
+                        default="",
+                    )
+                )
+                region_norm = _normalize_text(str(region))
+                unit_norm = _normalize_text(unit_name)
+                if region_norm and (
+                    region_norm in unit_norm or unit_norm in region_norm
+                ):
+                    return result
+
+        return results[0]
 
     async def fetch_series(
         self,
@@ -948,9 +922,9 @@ class GUSClient(DataSourceClient):
             kwargs.get("variable_id")
             or _first_present(
                 selected,
-                "id",
                 "variable-id",
                 "variableId",
+                "variable_id",
                 default="",
             )
         )
@@ -971,10 +945,12 @@ class GUSClient(DataSourceClient):
             "variable_id": variable_id,
             "unit_id": _first_present(
                 selected,
+                "id",
                 "unit-id",
                 "unitId",
-                default=None,
+                default=kwargs.get("unit_id"),
             ),
+            "unit_level": kwargs.get("unit_level"),
             "raw": selected,
         }
 
@@ -991,119 +967,6 @@ class GUSClient(DataSourceClient):
 
     async def aclose(self) -> None:
         await self._client.aclose()
-
-
-    async def query_data(
-        self,
-        query: str,
-        region: str = "Polska",
-        years: Optional[List[int]] = None,
-    ) -> NormalizedSeries:
-        """
-        High-level query entrypoint: resolve a natural-language metric phrase and
-        return a normalized series for the requested administrative unit.
-
-        Example:
-            result = await client.query_data(
-                query="średnia cena pszenicy w Polsce w 2017",
-                region="Polska",
-                years=[2017],
-            )
-        """
-        query = (query or "").strip()
-        if not query:
-            raise GUSNotFoundError("GUS query is empty.")
-
-        variable_id = await self._resolve_variable_id(query)
-        unit = await self.resolve_unit(region)
-        unit_id = _parse_int(unit.get("id")) or 0
-        unit_name = str(unit.get("name") or region)
-        unit_level = _parse_int(unit.get("level")) or 1
-
-        year_list = self._normalize_years(years) if years is not None else None
-        raw_data = await self.fetch_data(
-            variable_id=variable_id,
-            unit_id=unit_id,
-            unit_level=unit_level,
-            years=year_list,
-        )
-        results = _extract_results(raw_data)
-        selected = self._select_unit_result(
-            results,
-            {
-                "variable_id": variable_id,
-                "unit_id": unit_id,
-                "region": unit_name,
-                "unit_level": unit_level,
-            },
-        )
-        if selected is None:
-            raise GUSNotFoundError(
-                f"No GUS data found for variable {variable_id} in region {unit_name}."
-            )
-
-        data_points: List[DataPoint] = []
-        for index, value_item in enumerate(
-            _first_present(selected, "values", "data", default=[])
-        ):
-            year = _parse_int(
-                _first_present(value_item, "year", "date", "period", default="")
-            )
-            if not year and year_list and index < len(year_list):
-                year = year_list[index]
-            if not year:
-                continue
-            value_raw = _first_present(value_item, "value", "val", default=None)
-            if value_raw is None:
-                continue
-            try:
-                value = float(str(value_raw).strip().replace(",", "."))
-            except ValueError:
-                continue
-            data_points.append(DataPoint(date=str(year), value=value))
-
-        if not data_points:
-            raise GUSNotFoundError(
-                "GUS response contained no usable values for the selected variable."
-            )
-
-        data_points.sort(key=lambda point: point.date)
-        start_date = data_points[0].date
-        end_date = data_points[-1].date
-        time_period = (
-            f"{start_date} to {end_date}" if len(data_points) > 1 else start_date
-        )
-
-        return NormalizedSeries(
-            source=DataSource.GUS,
-            variable_id=str(variable_id),
-            name=str(
-                _first_present(
-                    selected,
-                    "name",
-                    "variableName",
-                    default=f"GUS Variable {variable_id}",
-                )
-            ),
-            region=unit_name,
-            unit_level=unit_level,
-            time_period=time_period,
-            unit=str(
-                _first_present(
-                    selected,
-                    "unitName",
-                    "unit",
-                    "measureUnit",
-                    default="",
-                )
-            ),
-            data=data_points,
-            metadata={
-                "gus_variable_id": str(variable_id),
-                "gus_unit_id": str(unit_id),
-                "query": query,
-            },
-        )
 
 
 class GUSAOError(Exception):

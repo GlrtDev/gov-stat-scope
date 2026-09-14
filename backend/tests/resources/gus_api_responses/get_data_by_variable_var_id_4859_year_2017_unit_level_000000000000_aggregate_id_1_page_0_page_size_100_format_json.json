@@ -1,0 +1,20 @@
+{
+  "totalRecords": 1,
+  "variableId": 4859,
+  "measureUnitId": 4,
+  "aggregateId": 1,
+  "lastUpdate": null,
+  "results": [
+    {
+      "id": "000000000000",
+      "name": "POLSKA",
+      "values": [
+        {
+          "year": "2017",
+          "val": 66.44,
+          "attrId": 1
+        }
+      ]
+    }
+  ]
+}

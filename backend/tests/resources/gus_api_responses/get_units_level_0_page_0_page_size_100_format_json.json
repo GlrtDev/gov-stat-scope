@@ -1,0 +1,18 @@
+{
+  "totalRecords": 1,
+  "page": 0,
+  "pageSize": 100,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/units?level=0&page=0&page-size=100&format=json",
+    "self": "https://bdl.stat.gov.pl/api/v1/units?level=0&page=0&page-size=100&format=json",
+    "last": "https://bdl.stat.gov.pl/api/v1/units?level=0&page=0&page-size=100&format=json"
+  },
+  "results": [
+    {
+      "id": "000000000000",
+      "name": "POLSKA",
+      "level": 0,
+      "hasDescription": false
+    }
+  ]
+}

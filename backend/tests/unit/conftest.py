@@ -55,7 +55,7 @@ def _fixture_for_request(request: httpx.Request) -> Any:
     if path == "/subjects":
         return _read_json("get_subjects.json")
 
-    # /subjects/{subject_id}/subjects
+    # /subjects/{subject_id}
     match = re.fullmatch(r"/subjects/(?P<subject_id>[^/]+)", path)
     if match:
         subject_id = match.group("subject_id")
@@ -70,16 +70,35 @@ def _fixture_for_request(request: httpx.Request) -> Any:
 
     if path == "/variables/search":
         subject_id = params.get("subject-id", "")
-        name = params.get("name", "").lower()
+        name = (params.get("name") or "").strip().lower()
+        page = params.get("page", "0")
+        page_size = params.get("page-size", "10")
+        fmt = (params.get("format") or "json").lower()
 
         subject_variants = [subject_id, subject_id.lower(), subject_id.upper()]
-        name_variants = [name, name.replace(" ", "_")]
+        fmt_variants = [fmt, "json"]
+        name_variants = [name, name.replace(" ", "_")] if name else [""]
 
-        candidates = [
+        if name:
+            candidates = [
+                f"get_variables_search_subject_id_{sid}_name_{n}_page_{page}_page_size_{page_size}_format_{f}.json"
+                for sid in subject_variants
+                for n in name_variants
+                for f in fmt_variants
+            ]
+        else:
+            candidates = [
+                f"get_variables_search_subject_id_{sid}_page_{page}_page_size_{page_size}_format_{f}.json"
+                for sid in subject_variants
+                for f in fmt_variants
+            ]
+
+        # Legacy fallback for older fixture names.
+        candidates.extend(
             f"get_variable_search_{sid}_{n}.json"
             for sid in subject_variants
             for n in name_variants
-        ]
+        )
 
         return _read_json(_first_existing(candidates))
 
@@ -87,27 +106,64 @@ def _fixture_for_request(request: httpx.Request) -> Any:
     match = re.fullmatch(r"/data/by-variable/(?P<var_id>\d+)", path)
     if match:
         var_id = match.group("var_id")
-        stem = f"get_data_by_variable_{var_id}"
 
+        # 1. Preserve the exact order of query params passed by the client.
+        ordered_components = [f"var_id_{var_id}"]
+        for key, value in params.items():
+            norm_key = key.replace("-", "_")
+            if norm_key == "var_id":
+                continue
+            ordered_components.append(f"{norm_key}_{value}")
+
+        ordered_candidates = [
+            "get_data_by_variable_" + "_".join(ordered_components) + ".json"
+        ]
+
+        # 2. Canonical order fallback for the standard GUS parameter names.
+        canonical_components = [f"var_id_{var_id}"]
+        seen = {"var_id"}
+
+        canonical_keys = (
+            "year",
+            "unit-level",
+            "aggregate-id",
+            "page",
+            "page-size",
+            "format",
+        )
+        for key in canonical_keys:
+            if key in params:
+                norm_key = key.replace("-", "_")
+                canonical_components.append(f"{norm_key}_{params[key]}")
+                seen.add(norm_key)
+
+        for key, value in params.items():
+            norm_key = key.replace("-", "_")
+            if norm_key not in seen:
+                canonical_components.append(f"{norm_key}_{value}")
+                seen.add(norm_key)
+
+        canonical_candidates = [
+            "get_data_by_variable_" + "_".join(canonical_components) + ".json"
+        ]
+
+        # 3. Legacy short-form names.
+        legacy_candidates = []
+        if "year" in params:
+            legacy_candidates.append(
+                f"get_data_by_variable_{var_id}_y{params['year']}.json"
+            )
+        if "unit-level" in params:
+            legacy_candidates.append(
+                f"get_data_by_variable_{var_id}_unit{params['unit-level']}.json"
+            )
         if "year" in params and "unit-level" in params:
-            candidates = [
-                f"{stem}_y{params['year']}_unit{params['unit-level']}.json",
-                f"{stem}_y{params['year']}.json",
-                f"{stem}_unit{params['unit-level']}.json",
-                f"{stem}.json",
-            ]
-        elif "year" in params:
-            candidates = [
-                f"{stem}_y{params['year']}.json",
-                f"{stem}.json",
-            ]
-        elif "unit-level" in params:
-            candidates = [
-                f"{stem}_unit{params['unit-level']}.json",
-                f"{stem}.json",
-            ]
-        else:
-            candidates = [f"{stem}.json"]
+            legacy_candidates.append(
+                f"get_data_by_variable_{var_id}_y{params['year']}_unit{params['unit-level']}.json"
+            )
+        legacy_candidates.append(f"get_data_by_variable_{var_id}.json")
+
+        candidates = ordered_candidates + canonical_candidates + legacy_candidates
 
         return _read_json(_first_existing(candidates))
 
@@ -117,6 +173,7 @@ def _fixture_for_request(request: httpx.Request) -> Any:
         "/attributes": "get_attributes.json",
         "/levels": "get_levels.json",
         "/measures": "get_measures.json",
+        "/units": "get_units_level_0_page_0_page_size_100_format_json.json",
     }
 
     if path in endpoint_map:

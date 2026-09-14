@@ -31,3 +31,11 @@ or
 chmod +x run_backend.sh
 .\scripts\run_backend.sh
 ```
+
+# Testing bdl endpoints
+```
+python bdl_swagger_client.py list
+python bdl_swagger_client.py call "/aggregates/{id}" --param id=1
+python bdl_swagger_client.py interactive
+python bdl_swagger_client.py interactive --api-key "1233456-1111-4444-9999-00000000000"
+```
