@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
@@ -24,6 +24,10 @@ class GUSVariablesArgsSchema(BaseModel):
 
 class GUSDataArgsSchema(BaseModel):
     variable_id: str = Field(description="Resolved GUS variable ID to fetch.")
+    variable_name: str = Field(
+        default="",
+        description="Human-readable metric name, used for normalized series metadata",
+    )
     year_start: int = Field(description="Start year (YYYY).")
     year_end: int = Field(description="End year (YYYY).")
 
@@ -57,6 +61,20 @@ async def fetch_gus_subjects(parent_id: Optional[str] = None) -> str:
     finally:
         await client.aclose()
 
+def _build_gus_variable_name(v: Dict[str, Any]) -> str:
+    """Combine GUS n1..n5 hierarchy fields into a single display name."""
+    for field in ("name", "title", "nazwa"):
+        value = v.get(field)
+        if value:
+            return str(value)
+
+    parts = []
+    for i in range(1, 6):
+        value = v.get(f"n{i}")
+        if value:
+            parts.append(str(value))
+
+    return " ".join(parts) if parts else ""
 
 @tool(args_schema=GUSVariablesArgsSchema)
 async def fetch_gus_variables(subject_id: str, query: str) -> str:
@@ -70,11 +88,11 @@ async def fetch_gus_variables(subject_id: str, query: str) -> str:
         simplified = []
         for v in variables:
             var_id = v.get("id") or v.get("variable-id") or v.get("variableId")
-            name = v.get("name") or v.get("title", "")
+            name = _build_gus_variable_name(v) or str(var_id)
             unit = v.get("unit") or v.get("unit-name") or v.get("measureUnit", "")
             if var_id is None:
                 continue
-            item = {"id": str(var_id), "name": str(name)}
+            item = {"id": str(var_id), "name": name}
             if unit:
                 item["unit"] = str(unit)
             simplified.append(item)
@@ -86,7 +104,7 @@ async def fetch_gus_variables(subject_id: str, query: str) -> str:
 
 
 @tool(args_schema=GUSDataArgsSchema)
-async def fetch_gus_data(variable_id: str, year_start: int, year_end: int) -> str:
+async def fetch_gus_data(variable_id: str, variable_name: str, year_start: int, year_end: int) -> str:
     """Fetch GUS time series for a resolved variable ID. This is the final data retrieval step."""
     client = GUSClient()
     try:
@@ -96,7 +114,7 @@ async def fetch_gus_data(variable_id: str, year_start: int, year_end: int) -> st
             year_end=year_end,
             unit_id="000000000000",
         )
-        normalized = client.normalize_response(raw_data, metric_name=variable_id, region="Polska")
+        normalized = client.normalize_response(raw_data, metric_name=variable_name, region="Polska")
         return normalized.model_dump_json()
     except Exception as e:
         return json.dumps({"error": f"GUS API Error: {str(e)}"})

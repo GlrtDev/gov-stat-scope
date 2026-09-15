@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 import uuid
 from typing import Any
 
 from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
 
 from app.context import get_request_id, get_trace_id
 from app.logging_config import get_logger
 from app.models import AskRequest, AskResponse, DataSource
 from app.rate_limiter import limiter
 from app.workflow.graph import invoke_workflow
-
+from app.workflow.progress import register_progress_queue, unregister_progress_queue
 
 router = APIRouter(prefix="/api/v1", tags=["Orchestration"])
 
@@ -32,7 +35,6 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
         },
     )
 
-    # Pass the explicitly selected data_source to bypass LangGraph's router node
     result: dict[str, Any] = await invoke_workflow(
         query=payload.message, 
         session_id=session_id,
@@ -50,6 +52,44 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
             "trace_id": get_trace_id(),
         },
     )
+
+
+@router.post("/ask/stream")
+async def ask_stream(request: Request, payload: AskRequest):
+    """Stream progress events while executing the workflow via SSE."""
+    session_id = payload.session_id or uuid.uuid4().hex
+    queue = register_progress_queue(session_id)
+
+    async def event_generator():
+        try:
+            task = asyncio.create_task(
+                invoke_workflow(
+                    query=payload.message,
+                    session_id=session_id,
+                    forced_source=payload.data_source
+                )
+            )
+            # Send initial event
+            yield f"event: started\ndata: {json.dumps({'session_id': session_id})}\n\n"
+
+            while True:
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=0.5)
+                except asyncio.TimeoutError:
+                    if task.done():
+                        result = task.result()
+                        yield f"event: done\ndata: {json.dumps({'final': result})}\n\n"
+                        break
+                    continue
+                yield f"event: progress\ndata: {json.dumps(event)}\n\n"
+                if event.get("type") == "analysis_completed":
+                    break
+        except Exception as e:
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+        finally:
+            unregister_progress_queue(session_id)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 def _normalize_selected_source(value: Any) -> DataSource | str:

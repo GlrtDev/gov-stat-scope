@@ -20,6 +20,10 @@ bash ./scripts/test.sh all
 ```
 .\scripts\test.ps1 -TestType single -TestPath "tests\integration\test_gus_deep_flow.py"
 ```
+# Run tests in debug mode
+```
+.\scripts\test.ps1 -TestType single -TestPath "tests\integration\test_workflow_gus_e2e.py" -Debug
+```
 
 
 # Running backend + dynamoDB for local dev

@@ -14,7 +14,7 @@ from app.adapters.schemas import DataPoint, NormalizedSeries
 from app.models import DataSource
 
 
-DEFAULT_BASE_URL = "https://api.stat.gov.pl/BDL/api/v2"
+DEFAULT_BASE_URL = "https://bdl.stat.gov.pl/api/v1"
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_PAGE_SIZE = 100
 DEFAULT_YEAR = 2023
@@ -320,8 +320,11 @@ class GUSClient(DataSourceClient):
         if cached is not None:
             return cached
 
-        path = "subjects" if parent_id is None else f"subjects/{parent_id}"
-        data = await self._request("GET", path)
+        params: Dict[str, Any] = {}
+        if parent_id:
+            params["parent-id"] = parent_id
+
+        data = await self._request("GET", "subjects", params=params)
         results = _extract_results(data)
         self._subject_cache.set(cache_key, results)
         return results
@@ -667,49 +670,6 @@ class GUSClient(DataSourceClient):
             years=years,
         )
 
-    def _select_result(
-        self,
-        results: List[Dict[str, Any]],
-        kwargs: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        if not results:
-            return {}
-
-        unit_id = kwargs.get("unit_id") or kwargs.get("unitId")
-        region = kwargs.get("region")
-
-        for result in results:
-            result_unit_id = str(
-                _first_present(
-                    result,
-                    "id",
-                    "unit-id",
-                    "unitId",
-                    default="",
-                )
-            )
-            if unit_id is not None and str(unit_id) == result_unit_id:
-                return result
-
-            if region:
-                unit_name = str(
-                    _first_present(
-                        result,
-                        "unit-name",
-                        "unitName",
-                        "name",
-                        default="",
-                    )
-                )
-                region_norm = _normalize_text(str(region))
-                unit_norm = _normalize_text(unit_name)
-                if region_norm and (
-                    region_norm in unit_norm or unit_norm in region_norm
-                ):
-                    return result
-
-        return results[0]
-
     async def fetch_series(
         self,
         variable_id: str,
@@ -774,13 +734,14 @@ class GUSClient(DataSourceClient):
         if not results:
             return {}
 
-        unit_id = kwargs.get("unit_id")
+        unit_id = kwargs.get("unit_id") or kwargs.get("unitId")
         region = kwargs.get("region")
 
         for result in results:
             result_unit_id = str(
                 _first_present(
                     result,
+                    "id",
                     "unit-id",
                     "unitId",
                     default="",
@@ -813,10 +774,7 @@ class GUSClient(DataSourceClient):
         raw_data: Dict[str, Any],
         **kwargs: Any,
     ) -> NormalizedSeries:
-        if isinstance(raw_data, dict):
-            results = _extract_results(raw_data)
-        else:
-            results = _extract_results({"results": raw_data})
+        results = _extract_results(raw_data)
 
         if not results:
             raise GUSNotFoundError("No data returned from GUS API")
@@ -911,23 +869,11 @@ class GUSClient(DataSourceClient):
         )
 
         dates = [dp["date"] for dp in data_points]
-        values = [dp["value"] for dp in data_points]
-
+        data_points_list = [DataPoint(date=dp["date"], value=dp["value"]) for dp in data_points]
         if len(dates) > 1 and dates[0] != dates[-1]:
             time_period = f"{dates[0]} to {dates[-1]}"
         else:
             time_period = dates[0] if dates else ""
-
-        variable_id = str(
-            kwargs.get("variable_id")
-            or _first_present(
-                selected,
-                "variable-id",
-                "variableId",
-                "variable_id",
-                default="",
-            )
-        )
 
         metric_name = str(
             kwargs.get("metric_name")
@@ -940,29 +886,12 @@ class GUSClient(DataSourceClient):
             )
         )
 
-        metadata = {
-            "source": "GUS",
-            "variable_id": variable_id,
-            "unit_id": _first_present(
-                selected,
-                "id",
-                "unit-id",
-                "unitId",
-                default=kwargs.get("unit_id"),
-            ),
-            "unit_level": kwargs.get("unit_level"),
-            "raw": selected,
-        }
-
         return NormalizedSeries(
             source=DataSource.GUS,
             metric_name=metric_name,
             region=region,
             time_period=time_period,
-            values=values,
-            dates=dates,
-            unit=unit,
-            metadata=metadata,
+            values=data_points_list,
         )
 
     async def aclose(self) -> None:
