@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Sequence
 
+from app.workflow.progress import push_progress
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
@@ -66,7 +67,10 @@ async def analyst_agent_node(state: OrchestratorState) -> Dict[str, Any]:
     """Analyze data using deterministic math injected into LLM synthesis."""
     llm = get_llm(temperature=0.0)
     structured_llm = llm.with_structured_output(AnalystOutput)
-    
+
+    session_id = state.get("session_id", "")
+    await push_progress(session_id, {"type": "analyst_started"})
+
     normalized_data = state.get("normalized_data", {})
     records = normalized_data.get("values", [])
     
@@ -100,6 +104,11 @@ async def analyst_agent_node(state: OrchestratorState) -> Dict[str, Any]:
     ]
     
     result: AnalystOutput = await structured_llm.ainvoke(messages)  # type: ignore
+    await push_progress(session_id, {
+        "type": "analyst_completed",
+        "analysis_result": True,
+        "calculations_performed": result.calculations_performed,
+    })
     
     return {
         "analysis_result": result.model_dump(),

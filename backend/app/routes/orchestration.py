@@ -69,7 +69,6 @@ async def ask_stream(request: Request, payload: AskRequest):
                     forced_source=payload.data_source
                 )
             )
-            # Send initial event
             yield f"event: started\ndata: {json.dumps({'session_id': session_id})}\n\n"
 
             while True:
@@ -78,12 +77,17 @@ async def ask_stream(request: Request, payload: AskRequest):
                 except asyncio.TimeoutError:
                     if task.done():
                         result = task.result()
-                        yield f"event: done\ndata: {json.dumps({'final': result})}\n\n"
+                        safe_payload = {
+                            "session_id": session_id,
+                            "final_answer": result.get("final_answer"),
+                            "selected_source": result.get("selected_source"),
+                            "errors": result.get("errors", []),
+                            "analysis_result": result.get("analysis_result"),
+                        }
+                        yield f"event: done\ndata: {json.dumps({'final': safe_payload})}\n\n"
                         break
                     continue
                 yield f"event: progress\ndata: {json.dumps(event)}\n\n"
-                if event.get("type") == "analysis_completed":
-                    break
         except Exception as e:
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
         finally:

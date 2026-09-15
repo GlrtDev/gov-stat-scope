@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from app.models import DataSource
 from app.workflow.llm_factory import get_llm
-
+from app.workflow.progress import push_progress
 
 class RouterOutput(BaseModel):
     selected_source: Literal["GUS", "FRED", "UNSUPPORTED"] = Field(
@@ -54,9 +54,9 @@ async def router_agent_node(state: dict[str, Any]) -> dict[str, Any]:
         "You are the Intent and Routing Agent for the GovStatScope AI Orchestrator. "
         "Analyze the user query and route it to the correct government data source using these strict rules:\n"
         "1. Route to 'GUS' if the query contains references to Poland, Polish regions, Polish cities, "
-        "or Polish economic/demographic metric terms.\n"
+        "or Polish economic/demographic metric terms. If there is no reference to Poland but text is in polish then route to 'GUS'.\n"
         "2. Route to 'FRED' if the query contains references to the US, United States, macroeconomics, "
-        "FRED, CPI, GDP, or US unemployment rates.\n"
+        "FRED, CPI, GDP, or US unemployment rates. If there is no reference to the US but text is in English then route to 'FRED'.\n"
         "3. Route to 'UNSUPPORTED' if the query asks for data outside these bounds, asks for personal advice, "
         "or cannot be clearly resolved to Poland or the US."
     )
@@ -67,6 +67,10 @@ async def router_agent_node(state: dict[str, Any]) -> dict[str, Any]:
     ]
 
     result: RouterOutput = await structured_llm.ainvoke(messages)  # type: ignore[misc]
+    await push_progress(state.get("session_id", ""), {
+        "type": "route_selected",
+        "source": result.selected_source,
+    })
 
     ai_message = AIMessage(
         content=f"Routing decision made: {result.selected_source}. Reason: {result.reason}"

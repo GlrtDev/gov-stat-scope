@@ -28,7 +28,7 @@ bash ./scripts/test.sh all
 
 # Running backend + dynamoDB for local dev
 ```
-.\scripts\run_backend.ps1
+.\scripts\run_backend.ps1 -Debug
 ```
 or
 ```

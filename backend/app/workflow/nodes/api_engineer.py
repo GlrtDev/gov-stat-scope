@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import re
 from datetime import date
 
-from backend.app.workflow.progress import push_progress
+from app.workflow.progress import push_progress  # corrected import
 from langchain_core.messages import (
     AIMessage,
     AnyMessage,
@@ -34,8 +34,6 @@ def _extract_query_string(user_query: Any) -> str:
         return str(user_query.get("raw_text") or user_query.get("query") or "")
     return str(getattr(user_query, "raw_text", user_query))
 
-
-import re
 
 def _strip_json_fence(text: str) -> str:
     text = text.strip()
@@ -75,6 +73,7 @@ def _item_id(item: Dict[str, Any]) -> Optional[str]:
             return str(value)
     return None
 
+
 def _item_name(item: Dict[str, Any]) -> str:
     for key in ("name", "nazwa", "title", "label"):
         value = item.get(key)
@@ -110,6 +109,66 @@ def _subject_level(subject_id: Optional[str]) -> str:
     return prefix[0] if prefix[:1] in {"K", "G", "P"} else "?"
 
 
+MAX_SELECTION_CANDIDATES = 30
+
+# Minimal Polish stopwords for query-token fallback scoring
+_QUERY_STOPWORDS = {
+    "jaka", "jaki", "jakie", "była", "był", "było", "były", "jest", "są",
+    "być", "w", "na", "dla", "po", "z", "do", "od", "roku", "lat",
+    "latach", "ile", "wynosi", "wynosiła", "wyniosła", "wyniosły", "podaj",
+    "pokaż", "chcę", "chciałbym", "chciałabym", "proszę",
+}
+
+
+def _normalize_text(text: str) -> str:
+    """Lowercase, strip diacritics, keep only letters/digits/spaces."""
+    text = unicodedata.normalize("NFD", text.casefold())
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    return re.sub(r"[^a-z0-9\s]", " ", text).strip()
+
+
+def _term_match_score(candidate_name: str, terms: List[str]) -> int:
+    """Score a candidate by how well related terms match its name."""
+    norm = _normalize_text(candidate_name)
+    name_tokens = norm.split()
+    score = 0
+
+    for term in terms:
+        norm_term = _normalize_text(term)
+        if not norm_term:
+            continue
+
+        # Exact substring match (handles "rynek pracy" in "Rynek pracy")
+        if norm_term in norm:
+            score += 3
+            continue
+
+        # Token subset match (handles "praca" in "rynek pracy")
+        term_tokens = set(norm_term.split())
+        if term_tokens and term_tokens.issubset(set(name_tokens)):
+            score += 2
+            continue
+
+        # Fuzzy token match for Polish inflection ("bezrobocie" vs "bezrobocia")
+        for name_token in name_tokens:
+            if len(norm_term) >= 4 and len(name_token) >= 4:
+                ratio = difflib.SequenceMatcher(None, norm_term, name_token).ratio()
+                if ratio >= 0.85:
+                    score += 1
+                    break
+
+    return score
+
+
+def _query_terms(raw_text: str) -> List[str]:
+    """Extract relevant tokens from the raw query for fallback scoring."""
+    return [
+        token
+        for token in re.findall(r"\w+", _normalize_text(raw_text))
+        if token not in _QUERY_STOPWORDS and len(token) > 2
+    ]
+
+
 async def _select_best_item(
     items: List[Dict[str, Any]],
     raw_text: str,
@@ -120,16 +179,21 @@ async def _select_best_item(
     if len(items) == 1:
         return items[0]
 
+    candidates = items[:MAX_SELECTION_CANDIDATES]
+
     llm = get_llm(temperature=0.0)
     options = "\n".join(
         f"- {_item_label(item)} (id: {_item_id(item)})"
-        for item in items
+        for item in candidates
     )
     prompt = (
-        f"Select the most relevant {item_description} for the user request.\n\n"
+        f"Select the most relevant {item_description} for the user request.\n"
+        "Pay attention to Polish inflection (e.g. 'cena' matches 'ceny').\n"
+        "First think of 2-3 related terms that would appear in the correct name. "
+        "Then choose the best match.\n\n"
         f"User request: {raw_text}\n\n"
-        f"Available options:\n{options}\n\n"
-        'Respond with only JSON: {"selected_id": "<exact id>"}'
+        f"Candidates:\n{options}\n\n"
+        'Respond with only JSON: {"selected_id": "<exact id>", "related_terms": ["term1", "term2", "term3"]}'
     )
 
     response = await llm.ainvoke([HumanMessage(content=prompt)])
@@ -146,21 +210,47 @@ async def _select_best_item(
 
     parsed = _parse_json_object(content)
     selected_id = parsed.get("selected_id") if parsed else None
-    if selected_id is None:
-        match = re.search(
-            r'["\']?selected_id["\']?\s*:\s*["\']([^"\']+)["\']',
-            content,
-        )
-        if match:
-            selected_id = match.group(1)
+    related_terms = parsed.get("related_terms") if isinstance(parsed, dict) else None
 
+    if not isinstance(related_terms, list):
+        related_terms = []
+
+    # Build scoring terms from LLM-related terms + raw query tokens
+    search_terms = [str(term) for term in related_terms if str(term).strip()]
+    search_terms.extend(_query_terms(raw_text))
+
+    # Score every candidate using these terms
+    scored_items = sorted(
+        (
+            (_term_match_score(_item_name(item), search_terms), index, item)
+            for index, item in enumerate(candidates)
+        ),
+        key=lambda pair: (pair[0], -pair[1]),
+        reverse=True,
+    )
+
+    best_score = scored_items[0][0] if scored_items else 0
+    best_item = scored_items[0][2] if scored_items else candidates[0]
+
+    selected_item = None
     if selected_id:
-        for item in items:
-            if _item_id(item) == str(selected_id):
-                return item
+        selected_item = next(
+            (item for item in candidates if _item_id(item) == str(selected_id)),
+            None,
+        )
 
-    return items[0]
+    # Accept the LLM pick only if it also scores reasonably well
+    if selected_item is not None:
+        selected_score = _term_match_score(_item_name(selected_item), search_terms)
+        if best_score == 0 or selected_score >= best_score * 0.6:
+            return selected_item
 
+    # Fallback to the highest scoring candidate
+    if best_score > 0:
+        return best_item
+
+    # Last resort: LLM pick or API's top choice
+    return selected_item or candidates[0]
 
 async def _extract_gus_keywords(raw_text: str) -> List[str]:
     """Ask the LLM for a list of search keywords (not city/region) for GUS variable lookup."""
@@ -229,6 +319,7 @@ async def _extract_gus_keywords(raw_text: str) -> List[str]:
 
     return cleaned
 
+
 def _extract_year_range(raw_text: str) -> Tuple[int, int]:
     """Extract `(year_start, year_end)` from the query; fallback to last 5 years."""
     current_year = date.today().year
@@ -243,13 +334,17 @@ def _extract_year_range(raw_text: str) -> Tuple[int, int]:
         return years[0], years[0]
     return years[0], years[-1]
 
+
 async def _run_gus_resolution_agent(
     raw_text: str,
+    session_id: str,
 ) -> Tuple[Optional[Dict[str, Any]], List[str], List[AnyMessage]]:
     node_messages: List[AnyMessage] = []
     node_errors: List[str] = []
 
     # 1. Top-level subjects (K-level)
+    await push_progress(session_id, {"type": "gus_search_started"})
+
     top_output = await fetch_gus_subjects.ainvoke({})
     node_messages.append(
         ToolMessage(content=top_output, tool_call_id="gus-subjects-top")
@@ -257,6 +352,7 @@ async def _run_gus_resolution_agent(
     top_subjects = _extract_items(top_output, "subjects", "items", "results", "data")
     if not top_subjects:
         node_errors.append("No top-level GUS subjects returned.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     selected_subject = await _select_best_item(
@@ -264,13 +360,23 @@ async def _run_gus_resolution_agent(
     )
     if selected_subject is None:
         node_errors.append("Failed to select a top-level GUS subject.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
+
+    subject_id_selected = _item_id(selected_subject)
+    await push_progress(session_id, {
+        "type": "subject_selected",
+        "level": "K",
+        "subject_id": subject_id_selected,
+        "name": _item_name(selected_subject)
+    })
 
     # 2. Drill down K -> G -> P (max 2 child fetches)
     for _ in range(2):
         subject_id = _item_id(selected_subject)
         if not subject_id:
             node_errors.append("Selected GUS subject has no id.")
+            await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
             return None, node_errors, node_messages
         if _subject_level(subject_id) == "P":
             break
@@ -289,6 +395,7 @@ async def _run_gus_resolution_agent(
             node_errors.append(
                 f"No child subjects returned for subject '{subject_id}'."
             )
+            await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
             return None, node_errors, node_messages
 
         selected_subject = await _select_best_item(
@@ -300,17 +407,28 @@ async def _run_gus_resolution_agent(
             node_errors.append(
                 f"Failed to select a child subject under '{subject_id}'."
             )
+            await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
             return None, node_errors, node_messages
+
+        child_id = _item_id(selected_subject)
+        await push_progress(session_id, {
+            "type": "subject_selected",
+            "level": _subject_level(child_id),
+            "subject_id": child_id,
+            "name": _item_name(selected_subject)
+        })
 
     subject_id = _item_id(selected_subject)
     if not subject_id:
         node_errors.append("Selected GUS subject has no id.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     if _subject_level(subject_id) != "P":
         node_errors.append(
             f"Could not reach a P-level GUS subject (stopped at '{subject_id}')."
         )
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     # 3. List variables for the P-level subject using keyword fallbacks
@@ -332,8 +450,9 @@ async def _run_gus_resolution_agent(
     if variables_output is None or not variables:
         node_errors.append(
             f"No GUS variables returned for subject '{subject_id}' with any keyword."
-            "Tried keywords: " + ", ".join(keywords)
+            f" Tried keywords: {', '.join(keywords)}."
         )
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     node_messages.append(
@@ -346,13 +465,21 @@ async def _run_gus_resolution_agent(
     selected_variable = await _select_best_item(variables, raw_text, "GUS variable")
     if selected_variable is None:
         node_errors.append("Failed to select a GUS variable.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     variable_id = _item_id(selected_variable)
     variable_name = _item_name(selected_variable)
     if not variable_id:
         node_errors.append("Selected GUS variable has no id.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
+
+    await push_progress(session_id, {
+        "type": "variable_selected",
+        "variable_id": variable_id,
+        "name": variable_name
+    })
 
     # 4. Fetch the normalized series
     year_start, year_end = _extract_year_range(raw_text)
@@ -368,18 +495,26 @@ async def _run_gus_resolution_agent(
             tool_call_id=f"gus-data-{variable_id}",
         )
     )
+    await push_progress(session_id, {
+        "type": "data_fetched",
+        "variable_id": variable_id,
+        "years": [year_start, year_end]
+    })
 
     parsed_data = _parse_json_payload(data_output)
     if parsed_data is None:
         node_errors.append("fetch_gus_data returned invalid JSON.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     if isinstance(parsed_data, dict) and "error" in parsed_data:
         node_errors.append(str(parsed_data["error"]))
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     if not isinstance(parsed_data, dict):
         node_errors.append("fetch_gus_data did not return a normalized dictionary.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
     return parsed_data, node_errors, node_messages
@@ -387,8 +522,11 @@ async def _run_gus_resolution_agent(
 
 async def _run_fred_resolution(
     raw_text: str,
+    session_id: str,
 ) -> Tuple[Optional[Dict[str, Any]], List[str], List[AnyMessage]]:
     """Use the single-tool FRED resolution flow."""
+    await push_progress(session_id, {"type": "fred_started"})
+
     llm = get_llm(temperature=0.0)
     tools = [resolve_and_fetch_fred]
     llm_with_tools = llm.bind_tools(tools)
@@ -411,6 +549,7 @@ async def _run_fred_resolution(
 
     if not ai_message.tool_calls:
         node_errors.append("API Engineer failed to generate a tool call for FRED.")
+        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
     else:
         tool_call = ai_message.tool_calls[0]
         try:
@@ -419,10 +558,17 @@ async def _run_fred_resolution(
             node_messages.append(ToolMessage(content=output_str, tool_call_id=tool_call["id"]))
             if "error" in output_dict:
                 node_errors.append(output_dict["error"])
+                await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
             else:
                 normalized_data = output_dict
+                await push_progress(session_id, {
+                    "type": "fred_completed",
+                    "series_id": output_dict.get("series_id") or output_dict.get("id"),
+                    "observations": len(output_dict.get("data", [])) if isinstance(output_dict.get("data"), list) else None
+                })
         except Exception as e:
             node_errors.append(f"FRED tool execution failed: {str(e)}")
+            await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
 
     return normalized_data, node_errors, node_messages
 
@@ -431,14 +577,16 @@ async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
     """Bind adapter tools, extract parameters via LLM, and execute data retrieval."""
     source = state.get("selected_source", "UNKNOWN")
     raw_text = _extract_query_string(state.get("user_query", ""))
+    session_id = state.get("session_id", "")
 
     if not raw_text:
+        await push_progress(session_id, {"type": "error", "message": "API Engineer received an empty query."})
         return {"errors": ["API Engineer received an empty query."]}
 
     if source == "FRED":
-        normalized_data, node_errors, node_messages = await _run_fred_resolution(raw_text)
+        normalized_data, node_errors, node_messages = await _run_fred_resolution(raw_text, session_id)
     else:
-        normalized_data, node_errors, node_messages = await _run_gus_resolution_agent(raw_text)
+        normalized_data, node_errors, node_messages = await _run_gus_resolution_agent(raw_text, session_id)
 
     return {
         "messages": node_messages,
