@@ -1,5 +1,4 @@
-// frontend/src/App.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChatMessage as ChatMessageType } from './types/api';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
@@ -7,38 +6,52 @@ import { ProgressSteps } from './components/ProgressSteps';
 import type { StepDefinition } from './components/ProgressSteps';
 import { streamAskOrchestrator, ApiError } from './api/client';
 import type { ProgressEvent } from './api/client';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import type { TranslationKey } from './i18n/translations';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 
-const WORKFLOW_STEPS: StepDefinition[] = [
-  { id: 'router', label: 'Route' },
-  { id: 'api', label: 'Fetch' },
-  { id: 'analyst', label: 'Analyze' },
-  { id: 'complete', label: 'Complete' },
-];
+type Translate = (key: TranslationKey, params?: Record<string, string | number>) => string;
 
-function formatEventStatus(event: ProgressEvent): string {
+function getWorkflowSteps(t: Translate): StepDefinition[] {
+  return [
+    { id: 'router', label: t('step.router') },
+    { id: 'api', label: t('step.api') },
+    { id: 'analyst', label: t('step.analyst') },
+    { id: 'complete', label: t('step.complete') },
+  ];
+}
+
+function formatEventStatus(event: ProgressEvent, t: Translate): string {
   switch (event.type) {
     case 'route_selected':
-      return `Source: ${event.source}`;
+      return t('progress.route_selected', { source: event.source ?? '?' });
     case 'gus_search_started':
-      return 'Searching GUS subjects...';
+      return t('progress.gus_search_started');
     case 'subject_selected':
-      return `${event.level}-level subject: ${event.name}`;
+      return t('progress.subject_selected', {
+        level: event.level ?? '?',
+        name: event.name ?? '?',
+      });
     case 'variable_selected':
-      return `Variable: ${event.name}`;
-    case 'data_fetched':
-      return `Fetched: ${event.years?.[0] || '?'}–${event.years?.[1] || '?'}`;
+      return t('progress.variable_selected', { name: event.name ?? '?' });
+    case 'data_fetched': {
+      const [start, end] = event.years ?? [];
+      return t('progress.data_fetched', { start: start ?? '?', end: end ?? '?' });
+    }
     case 'fred_started':
-      return 'Fetching FRED data...';
+      return t('progress.fred_started');
     case 'fred_completed':
-      return `FRED series: ${event.series_id}`;
+      return t('progress.fred_completed', { series_id: event.series_id ?? '?' });
     case 'analyst_started':
-      return 'Analyzing data...';
+      return t('progress.analyst_started');
     case 'analyst_completed':
-      return 'Analysis complete';
+      return t('progress.analyst_completed');
     case 'error':
-      return `Error: ${event.message || 'Unknown error'}`;
+      return t('progress.error', {
+        message: event.message || t('progress.unknown_error'),
+      });
     default:
-      return 'Working...';
+      return t('progress.working');
   }
 }
 
@@ -75,7 +88,9 @@ function extractFinalAnswer(event: unknown): string | null {
   return null;
 }
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { t } = useLanguage();
+
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState('');
@@ -87,6 +102,8 @@ export const App: React.FC = () => {
   const [isProgressExpanded, setIsProgressExpanded] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const workflowSteps = useMemo<StepDefinition[]>(() => getWorkflowSteps(t), [t]);
 
   useEffect(() => {
     setSessionId(crypto.randomUUID());
@@ -109,7 +126,7 @@ export const App: React.FC = () => {
 
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
-    setProgressMessages(['Starting...']);
+    setProgressMessages([t('progress.starting')]);
     setIsProgressExpanded(false);
     setProgressSteps({ activeStepId: 'router', errorStepId: undefined });
 
@@ -129,7 +146,7 @@ export const App: React.FC = () => {
           if (event && typeof event.type === 'string') {
             if (event.type === 'done' || event.type === 'final') return;
 
-            setProgressMessages((prev) => [...prev, formatEventStatus(event)]);
+            setProgressMessages((prev) => [...prev, formatEventStatus(event, t)]);
 
             if (event.type === 'route_selected') {
               setProgressSteps({ activeStepId: 'api', errorStepId: undefined });
@@ -150,14 +167,14 @@ export const App: React.FC = () => {
       const assistantMessage: ChatMessageType = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: finalAnswer || responseAnswer || 'No response received.',
+        content: finalAnswer || responseAnswer || t('chat.no_response'),
         source: response.source,
         metadata: response.metadata,
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setProgressSteps({ activeStepId: 'complete', errorStepId: undefined });
     } catch (error) {
-      let errorMessage = 'An unexpected error occurred. Please try again.';
+      let errorMessage = t('errors.unexpected');
       let metadata: Record<string, unknown> | undefined;
 
       if (error instanceof ApiError) {
@@ -192,13 +209,16 @@ export const App: React.FC = () => {
           <div className="d-flex align-items-center gap-3">
             <div className="brand-mark" aria-hidden="true">GS</div>
             <div>
-              <h1 className="app-title mb-0 fw-bold text-body-emphasis">GovStatScope AI</h1>
-              <p className="mb-0 small text-secondary">Polish &amp; US government data assistant</p>
+              <h1 className="app-title mb-0 fw-bold text-body-emphasis">{t('app.title')}</h1>
+              <p className="mb-0 small text-secondary">{t('app.tagline')}</p>
             </div>
           </div>
-          <span className="session-chip badge rounded-pill border-0 bg-light text-body-secondary fw-normal font-monospace">
-            Session: {sessionId.slice(0, 8)}
-          </span>
+          <div className="d-flex align-items-center gap-2">
+            <LanguageSwitcher />
+            <span className="session-chip badge rounded-pill border-0 bg-light text-body-secondary fw-normal font-monospace">
+              {t('app.session')} {sessionId.slice(0, 8)}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -206,7 +226,7 @@ export const App: React.FC = () => {
         {isLoading && (
           <div className="mb-3">
             <ProgressSteps
-              steps={WORKFLOW_STEPS}
+              steps={workflowSteps}
               currentStepId={progressSteps.activeStepId}
               errorStepId={progressSteps.errorStepId}
             />
@@ -226,7 +246,7 @@ export const App: React.FC = () => {
                   className="btn btn-link btn-sm p-0 text-decoration-none fw-semibold d-inline-flex align-items-center gap-1"
                   aria-expanded={isProgressExpanded}
                 >
-                  {isProgressExpanded ? 'Show less' : 'Show all'}
+                  {isProgressExpanded ? t('session.show_less') : t('session.show_all')}
                   <span aria-hidden="true">{isProgressExpanded ? ' ▲' : ' ▼'}</span>
                 </button>
               )}
@@ -236,16 +256,16 @@ export const App: React.FC = () => {
 
         {messages.length === 0 ? (
           <div className="empty-state my-auto text-center rounded-4 border border-dashed p-5 bg-white shadow-sm">
-            <h2 className="fw-bold mb-3">Ask about government data</h2>
+            <h2 className="fw-bold mb-3">{t('empty.title')}</h2>
             <p className="text-secondary mb-4">
-              Try a query routed to GUS or FRED. The assistant will normalize the response and explain the source.
+              {t('empty.subtitle')}
             </p>
             <div className="d-flex flex-column gap-2 align-items-center">
               <span className="badge bg-primary-subtle text-dark border border-primary-subtle rounded-pill px-3 py-2 fw-normal">
-                Example: Jaka była cena pszenicy w 2017?
+                {t('empty.example_gus')}
               </span>
               <span className="badge bg-success-subtle text-dark border border-success-subtle rounded-pill px-3 py-2 fw-normal">
-                Example: Jak zmieniał się PKB Polski w ostatnich latach 2005-2020?
+                {t('empty.example_fred')}
               </span>
             </div>
           </div>
@@ -261,11 +281,21 @@ export const App: React.FC = () => {
 
       <footer className="app-footer border-top py-3 px-3 px-md-4 bg-white">
         <div className="container-xl">
-          <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
+          <ChatInput
+            onSend={handleSendMessage}
+            isLoading={isLoading}
+            placeholder={t('chat.input_placeholder')}
+          />
         </div>
       </footer>
     </div>
   );
 };
+
+export const App: React.FC = () => (
+  <LanguageProvider>
+    <AppContent />
+  </LanguageProvider>
+);
 
 export default App;

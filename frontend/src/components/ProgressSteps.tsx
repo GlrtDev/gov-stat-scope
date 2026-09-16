@@ -6,7 +6,6 @@ export type StepStatus = 'pending' | 'active' | 'completed' | 'error';
 export interface StepDefinition {
   id: string;
   label: string;
-  color: string; // Tailwind/BS color class, e.g., "primary", "success", "warning"
 }
 
 type ProgressStepsProps = {

@@ -1,5 +1,5 @@
-// frontend/src/components/ChatInput.tsx
 import React, { FormEvent, KeyboardEvent, useState } from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 type ChatInputProps = {
   onSend: (query: string) => void | Promise<void>;
@@ -7,6 +7,7 @@ type ChatInputProps = {
 };
 
 export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
+  const { t } = useLanguage();
   const [value, setValue] = useState<string>('');
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -32,13 +33,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
     <form className="chat-composer d-flex gap-2 align-items-end" onSubmit={handleSubmit}>
       <div className="flex-grow-1">
         <label htmlFor="govstat-query-input" className="visually-hidden">
-          Ask about government data
+          {t('chat.input_label')}
         </label>
         <textarea
           id="govstat-query-input"
           className="form-control shadow-sm rounded-4 px-3 py-3"
           rows={2}
-          placeholder='Ask about Polish or US government data, e.g. "What is the population of Poland?"'
+          placeholder={t('chat.input_placeholder')}
           value={value}
           disabled={isLoading}
           onChange={(event) => setValue(event.target.value)}
@@ -46,14 +47,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
         />
       </div>
 
-      <button type="submit" className="btn btn-primary btn-lg px-4 rounded-4 shadow-sm align-self-end" disabled={isLoading || !value.trim()}>
+      <button
+        type="submit"
+        className="btn btn-primary btn-lg px-4 rounded-4 shadow-sm align-self-end"
+        disabled={isLoading || !value.trim()}
+      >
         {isLoading ? (
           <>
             <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />
-            Working...
+            {t('chat.working')}
           </>
         ) : (
-          'Send'
+          t('chat.send')
         )}
       </button>
     </form>
