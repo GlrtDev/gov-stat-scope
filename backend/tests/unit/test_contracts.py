@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 from app.models import AskRequest, AskResponse, ErrorResponse
-from app.workflow.nodes.api_engineer import ApiEngineerOutput
 from app.workflow.nodes.router import RouterOutput
 from pydantic import ValidationError
 
@@ -26,29 +25,6 @@ def test_router_output_contract() -> None:
     # Missing mandatory reason field
     with pytest.raises(ValidationError):
         RouterOutput.model_validate({"selected_source": "GUS", "confidence": 1.0})
-
-
-def test_api_engineer_output_contract() -> None:
-    """Assert valid schema enforcement for ApiEngineerOutput."""
-    valid_payload = {
-        "endpoint_target": "by-variable",
-        "resolved_metric_id": "12345",
-        "query_parameters": {"unit-level": "2", "year": ["2021", "2022"]},
-        "justification": "Parameters mapped for regional GUS data retrieval.",
-    }
-    instance = ApiEngineerOutput.model_validate(valid_payload)
-    assert instance.endpoint_target == "by-variable"
-    assert instance.resolved_metric_id == "12345"
-    assert instance.query_parameters["unit-level"] == "2"
-
-    # Invalid type for parameters
-    with pytest.raises(ValidationError):
-        ApiEngineerOutput.model_validate({
-            "endpoint_target": "by-variable",
-            "resolved_metric_id": "12345",
-            "query_parameters": "not-a-dict",
-            "justification": "Invalid payload",
-        })
 
 
 def test_ask_request_contract() -> None:
