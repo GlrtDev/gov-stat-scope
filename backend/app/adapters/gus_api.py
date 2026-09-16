@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from app.adapters.gus_cache import dynamodb_cache
 from app.adapters.gus_errors import (
     GUSAOError,
     GUSInvalidClientIdError,
@@ -54,6 +55,7 @@ class GUSApiClient:
         self._variable_cache = TTLCache(ttl_seconds=3600)
         self._variable_id_cache = TTLCache(ttl_seconds=3600)
 
+    @dynamodb_cache(ttl_days=7)
     async def _request(self, method: str, path: str, **kwargs: Any) -> Any:
         response = await self._client.request(method, path, **kwargs)
         if response.status_code == 401:

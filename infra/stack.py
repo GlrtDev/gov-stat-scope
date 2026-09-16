@@ -23,7 +23,7 @@ class GovDataInfraStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs: dict[str, str]) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # 1. DynamoDB State Table
+        # 1. DynamoDB State Tables
         session_table = dynamodb.Table(
             self,
             "GovDataSessionsTable",
@@ -33,6 +33,16 @@ class GovDataInfraStack(Stack):
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             time_to_live_attribute="expires_at",
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
+        gus_cache_table = dynamodb.Table(
+            self,
+            "GUSCacheTable",
+            table_name="govstat-gus-cache",
+            partition_key=dynamodb.Attribute(name="pk", type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            time_to_live_attribute="ttl",
             removal_policy=RemovalPolicy.DESTROY,
         )
 
@@ -107,6 +117,7 @@ class GovDataInfraStack(Stack):
             resources=["arn:aws:secretsmanager:*:*:secret:govdata/*"],
         ))
         session_table.grant_read_write_data(task_role)
+        gus_cache_table.grant_read_write_data(task_role)
 
         # 6. Fargate Task Definition
         task_definition = ecs.FargateTaskDefinition(
@@ -126,6 +137,7 @@ class GovDataInfraStack(Stack):
             ),
             environment={
                 "DYNAMODB_TABLE_NAME": session_table.table_name,
+                "GUS_CACHE_TABLE": gus_cache_table.table_name,
                 "ENVIRONMENT": "production",
             }
         )
