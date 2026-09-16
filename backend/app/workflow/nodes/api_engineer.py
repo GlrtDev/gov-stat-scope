@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import difflib
 import json
 from typing import Any, Dict, List, Optional, Tuple
 import re
 from datetime import date
+import unicodedata
 
 from app.workflow.progress import push_progress  # corrected import
 from langchain_core.messages import (
@@ -25,6 +27,52 @@ from app.workflow.tools import (
     resolve_and_fetch_fred,
 )
 
+# Add near top, after imports
+RANK_POOL_SIZE = 10  # For LLM fallback only
+
+async def _generate_expanded_keywords(raw_text: str) -> List[str]:
+    """Use LLM to generate 10-20 Polish terms (synonyms, inflections, related words)
+    for robust lexical matching. Called once per query to save tokens."""
+    llm = get_llm(temperature=0.0)
+    prompt = (
+        "Generate 10 to 20 distinct Polish words or short phrases that would appear in "
+        "statistical variable names related to the user request. Include synonyms, "
+        "inflected forms (e.g., 'cena', 'ceny', 'cen'), and domain terms. "
+        "Exclude city names, region names, or administrative units. "
+        "Return a JSON list of strings.\n\n"
+        f"User request: {raw_text}\n\n"
+        'Respond with only JSON: {"terms": ["term1", "term2", ...]}'
+    )
+    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    content = getattr(response, "content", None)
+    if isinstance(content, list):
+        content = "".join(block.get("text", "") if isinstance(block, dict) else str(block) for block in content)
+    elif content is None:
+        content = str(response)
+    else:
+        content = str(content)
+
+    parsed = _parse_json_object(content)
+    terms = parsed.get("terms") if parsed else None
+    if not isinstance(terms, list):
+        terms = []
+        match = re.search(r"\[.*\]", content, re.DOTALL)
+        if match:
+            try:
+                arr = json.loads(match.group(0))
+                if isinstance(arr, list):
+                    terms = [str(k).strip() for k in arr if str(k).strip()]
+            except json.JSONDecodeError:
+                pass
+
+    seen = set()
+    cleaned = []
+    for t in terms:
+        t = t.strip().lower()
+        if t and t not in seen:
+            seen.add(t)
+            cleaned.append(t)
+    return cleaned[:20]
 
 def _extract_query_string(user_query: Any) -> str:
     """Safely extract the raw query string from dicts, objects, or primitive strings."""
@@ -173,84 +221,94 @@ async def _select_best_item(
     items: List[Dict[str, Any]],
     raw_text: str,
     item_description: str,
+    expanded_terms: Optional[List[str]] = None,
 ) -> Optional[Dict[str, Any]]:
     if not items:
         return None
     if len(items) == 1:
         return items[0]
 
-    candidates = items[:MAX_SELECTION_CANDIDATES]
+    # Combine query tokens with expanded terms
+    search_terms = _query_terms(raw_text)
+    if expanded_terms:
+        search_terms.extend(expanded_terms)
 
+    if search_terms:
+        scored = sorted(
+            (
+                (_term_match_score(_item_name(item), search_terms), index, item)
+                for index, item in enumerate(items)
+            ),
+            key=lambda pair: (pair[0], -pair[1]),
+            reverse=True,
+        )
+        if scored and scored[0][0] > 0:
+            return scored[0][2]
+
+    # Lexical failed – rare fallback to LLM (small pool only)
     llm = get_llm(temperature=0.0)
-    options = "\n".join(
-        f"- {_item_label(item)} (id: {_item_id(item)})"
-        for item in candidates
-    )
+    candidates = items[:RANK_POOL_SIZE]
+    options = "\n".join(f"- {_item_label(item)} (id: {_item_id(item)})" for item in candidates)
     prompt = (
         f"Select the most relevant {item_description} for the user request.\n"
-        "Pay attention to Polish inflection (e.g. 'cena' matches 'ceny').\n"
-        "First think of 2-3 related terms that would appear in the correct name. "
-        "Then choose the best match.\n\n"
+        "Pay attention to Polish inflection.\n\n"
         f"User request: {raw_text}\n\n"
         f"Candidates:\n{options}\n\n"
-        'Respond with only JSON: {"selected_id": "<exact id>", "related_terms": ["term1", "term2", "term3"]}'
+        'Respond with only JSON: {"selected_id": "<exact id>"}'
     )
-
     response = await llm.ainvoke([HumanMessage(content=prompt)])
     content = getattr(response, "content", None)
     if isinstance(content, list):
-        content = "".join(
-            block.get("text", "") if isinstance(block, dict) else str(block)
-            for block in content
-        )
+        content = "".join(block.get("text", "") if isinstance(block, dict) else str(block) for block in content)
     elif content is None:
         content = str(response)
     else:
         content = str(content)
-
     parsed = _parse_json_object(content)
     selected_id = parsed.get("selected_id") if parsed else None
-    related_terms = parsed.get("related_terms") if isinstance(parsed, dict) else None
-
-    if not isinstance(related_terms, list):
-        related_terms = []
-
-    # Build scoring terms from LLM-related terms + raw query tokens
-    search_terms = [str(term) for term in related_terms if str(term).strip()]
-    search_terms.extend(_query_terms(raw_text))
-
-    # Score every candidate using these terms
-    scored_items = sorted(
-        (
-            (_term_match_score(_item_name(item), search_terms), index, item)
-            for index, item in enumerate(candidates)
-        ),
-        key=lambda pair: (pair[0], -pair[1]),
-        reverse=True,
-    )
-
-    best_score = scored_items[0][0] if scored_items else 0
-    best_item = scored_items[0][2] if scored_items else candidates[0]
-
-    selected_item = None
     if selected_id:
-        selected_item = next(
-            (item for item in candidates if _item_id(item) == str(selected_id)),
-            None,
+        for item in candidates:
+            if _item_id(item) == str(selected_id):
+                return item
+    return candidates[0]
+
+
+async def _rank_candidates(
+    items: List[Dict[str, Any]],
+    raw_text: str,
+    item_description: str,
+    top_n: int = 5,
+    expanded_terms: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
+    """Lexical-only ranking using expanded terms. No LLM call."""
+    if not items:
+        return []
+    if len(items) <= top_n:
+        return items[:top_n]
+
+    search_terms = _query_terms(raw_text)
+    if expanded_terms:
+        search_terms.extend(expanded_terms)
+
+    if search_terms:
+        scored = sorted(
+            (
+                (_term_match_score(_item_name(item), search_terms), index, item)
+                for index, item in enumerate(items)
+            ),
+            key=lambda pair: (pair[0], -pair[1]),
+            reverse=True,
         )
+        ranked = [item for score, _, item in scored if score > 0]
+        for _, _, item in scored:
+            if item not in ranked:
+                ranked.append(item)
+            if len(ranked) >= top_n:
+                break
+        return ranked[:top_n]
 
-    # Accept the LLM pick only if it also scores reasonably well
-    if selected_item is not None:
-        selected_score = _term_match_score(_item_name(selected_item), search_terms)
-        if best_score == 0 or selected_score >= best_score * 0.6:
-            return selected_item
+    return items[:top_n]
 
-    # Fallback to the highest scoring candidate
-    if best_score > 0:
-        return best_item
-
-    # Last resort: LLM pick or API's top choice
-    return selected_item or candidates[0]
 
 async def _extract_gus_keywords(raw_text: str) -> List[str]:
     """Ask the LLM for a list of search keywords (not city/region) for GUS variable lookup."""
@@ -335,189 +393,125 @@ def _extract_year_range(raw_text: str) -> Tuple[int, int]:
     return years[0], years[-1]
 
 
-async def _run_gus_resolution_agent(
-    raw_text: str,
-    session_id: str,
-) -> Tuple[Optional[Dict[str, Any]], List[str], List[AnyMessage]]:
-    node_messages: List[AnyMessage] = []
-    node_errors: List[str] = []
+async def _run_gus_resolution_agent(raw_text: str, session_id: str):
+    node_messages = []
+    node_errors = []
 
-    # 1. Top-level subjects (K-level)
     await push_progress(session_id, {"type": "gus_search_started"})
 
+    # Generate expanded keywords once (one LLM call per query)
+    expanded_terms = await _generate_expanded_keywords(raw_text)
+
     top_output = await fetch_gus_subjects.ainvoke({})
-    node_messages.append(
-        ToolMessage(content=top_output, tool_call_id="gus-subjects-top")
-    )
+    node_messages.append(ToolMessage(content=top_output, tool_call_id="gus-subjects-top"))
     top_subjects = _extract_items(top_output, "subjects", "items", "results", "data")
     if not top_subjects:
         node_errors.append("No top-level GUS subjects returned.")
         await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
-    selected_subject = await _select_best_item(
-        top_subjects, raw_text, "top-level GUS subject"
-    )
-    if selected_subject is None:
-        node_errors.append("Failed to select a top-level GUS subject.")
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
+    top_candidates = await _rank_candidates(top_subjects, raw_text, "top-level GUS subject",
+                                            top_n=5, expanded_terms=expanded_terms)
 
-    subject_id_selected = _item_id(selected_subject)
-    await push_progress(session_id, {
-        "type": "subject_selected",
-        "level": "K",
-        "subject_id": subject_id_selected,
-        "name": _item_name(selected_subject)
-    })
+    keywords = await _extract_gus_keywords(raw_text)  # separate, for variable search
 
-    # 2. Drill down K -> G -> P (max 2 child fetches)
-    for _ in range(2):
-        subject_id = _item_id(selected_subject)
-        if not subject_id:
-            node_errors.append("Selected GUS subject has no id.")
-            await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-            return None, node_errors, node_messages
-        if _subject_level(subject_id) == "P":
-            break
+    for k_index, k_subject in enumerate(top_candidates):
+        k_id = _item_id(k_subject)
+        k_name = _item_name(k_subject)
+        await push_progress(session_id, {"type": "subject_selected", "level": "K",
+                                         "subject_id": k_id, "name": k_name})
 
-        children_output = await fetch_gus_subjects.ainvoke({"parent_id": subject_id})
-        node_messages.append(
-            ToolMessage(
-                content=children_output,
-                tool_call_id=f"gus-children-{subject_id}",
-            )
-        )
-        children = _extract_items(
-            children_output, "subjects", "items", "results", "data"
-        )
-        if not children:
-            node_errors.append(
-                f"No child subjects returned for subject '{subject_id}'."
-            )
-            await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-            return None, node_errors, node_messages
+        current_subject = k_subject
+        for _ in range(2):
+            subject_id = _item_id(current_subject)
+            if not subject_id or _subject_level(subject_id) == "P":
+                break
 
-        selected_subject = await _select_best_item(
-            children,
-            raw_text,
-            f"GUS child subject under {subject_id}",
-        )
-        if selected_subject is None:
-            node_errors.append(
-                f"Failed to select a child subject under '{subject_id}'."
-            )
-            await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-            return None, node_errors, node_messages
+            children_output = await fetch_gus_subjects.ainvoke({"parent_id": subject_id})
+            node_messages.append(ToolMessage(content=children_output,
+                                             tool_call_id=f"gus-children-{subject_id}"))
+            children = _extract_items(children_output, "subjects", "items", "results", "data")
+            if not children:
+                break
 
-        child_id = _item_id(selected_subject)
-        await push_progress(session_id, {
-            "type": "subject_selected",
-            "level": _subject_level(child_id),
-            "subject_id": child_id,
-            "name": _item_name(selected_subject)
-        })
+            selected_child = await _select_best_item(children, raw_text,
+                                                      f"GUS child subject under {subject_id}",
+                                                      expanded_terms=expanded_terms)
+            if selected_child is None:
+                break
 
-    subject_id = _item_id(selected_subject)
-    if not subject_id:
-        node_errors.append("Selected GUS subject has no id.")
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
+            current_subject = selected_child
+            child_id = _item_id(selected_child)
+            await push_progress(session_id, {"type": "subject_selected",
+                                             "level": _subject_level(child_id),
+                                             "subject_id": child_id,
+                                             "name": _item_name(selected_child)})
 
-    if _subject_level(subject_id) != "P":
-        node_errors.append(
-            f"Could not reach a P-level GUS subject (stopped at '{subject_id}')."
-        )
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
-
-    # 3. List variables for the P-level subject using keyword fallbacks
-    keywords = await _extract_gus_keywords(raw_text)
-    variables_output = None
-    for keyword in keywords:
-        try:
-            variables_output = await fetch_gus_variables.ainvoke({
-                "subject_id": subject_id,
-                "query": keyword,
-            })
-        except Exception:
+        final_id = _item_id(current_subject)
+        if not final_id or _subject_level(final_id) != "P":
             continue
 
-        variables = _extract_items(variables_output, "variables", "items", "results", "data")
-        if variables:
-            break
+        variables_output = None
+        variables = []
+        for keyword in keywords:
+            try:
+                variables_output = await fetch_gus_variables.ainvoke({
+                    "subject_id": final_id,
+                    "query": keyword,
+                })
+            except Exception:
+                continue
+            variables = _extract_items(variables_output, "variables", "items", "results", "data")
+            if variables:
+                break
 
-    if variables_output is None or not variables:
-        node_errors.append(
-            f"No GUS variables returned for subject '{subject_id}' with any keyword."
-            f" Tried keywords: {', '.join(keywords)}."
-        )
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
+        if variables_output is not None:
+            node_messages.append(ToolMessage(content=variables_output,
+                                             tool_call_id=f"gus-variables-{final_id}"))
+        if not variables:
+            continue
 
-    node_messages.append(
-        ToolMessage(
-            content=variables_output,
-            tool_call_id=f"gus-variables-{subject_id}",
-        )
-    )
+        selected_variable = await _select_best_item(variables, raw_text, "GUS variable",
+                                                    expanded_terms=expanded_terms)
+        if selected_variable is None:
+            continue
 
-    selected_variable = await _select_best_item(variables, raw_text, "GUS variable")
-    if selected_variable is None:
-        node_errors.append("Failed to select a GUS variable.")
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
+        variable_id = _item_id(selected_variable)
+        variable_name = _item_name(selected_variable)
+        if not variable_id:
+            continue
 
-    variable_id = _item_id(selected_variable)
-    variable_name = _item_name(selected_variable)
-    if not variable_id:
-        node_errors.append("Selected GUS variable has no id.")
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
+        await push_progress(session_id, {"type": "variable_selected",
+                                         "variable_id": variable_id,
+                                         "name": variable_name})
 
-    await push_progress(session_id, {
-        "type": "variable_selected",
-        "variable_id": variable_id,
-        "name": variable_name
-    })
+        year_start, year_end = _extract_year_range(raw_text)
+        data_output = await fetch_gus_data.ainvoke({
+            "variable_id": variable_id,
+            "variable_name": variable_name,
+            "year_start": year_start,
+            "year_end": year_end,
+        })
+        node_messages.append(ToolMessage(content=data_output, tool_call_id=f"gus-data-{variable_id}"))
 
-    # 4. Fetch the normalized series
-    year_start, year_end = _extract_year_range(raw_text)
-    data_output = await fetch_gus_data.ainvoke({
-        "variable_id": variable_id,
-        "variable_name": variable_name,
-        "year_start": year_start,
-        "year_end": year_end,
-    })
-    node_messages.append(
-        ToolMessage(
-            content=data_output,
-            tool_call_id=f"gus-data-{variable_id}",
-        )
-    )
-    await push_progress(session_id, {
-        "type": "data_fetched",
-        "variable_id": variable_id,
-        "years": [year_start, year_end]
-    })
+        parsed_data = _parse_json_payload(data_output)
+        if parsed_data is None:
+            node_errors.append("fetch_gus_data returned invalid JSON.")
+            continue
 
-    parsed_data = _parse_json_payload(data_output)
-    if parsed_data is None:
-        node_errors.append("fetch_gus_data returned invalid JSON.")
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
+        if isinstance(parsed_data, dict) and "error" in parsed_data:
+            node_errors.append(str(parsed_data["error"]))
+            continue
 
-    if isinstance(parsed_data, dict) and "error" in parsed_data:
-        node_errors.append(str(parsed_data["error"]))
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
+        if isinstance(parsed_data, dict):
+            await push_progress(session_id, {"type": "data_fetched",
+                                             "variable_id": variable_id,
+                                             "years": [year_start, year_end]})
+            return parsed_data, node_errors, node_messages
 
-    if not isinstance(parsed_data, dict):
-        node_errors.append("fetch_gus_data did not return a normalized dictionary.")
-        await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-        return None, node_errors, node_messages
-
-    return parsed_data, node_errors, node_messages
+    node_errors.append("No suitable GUS subject/variable combination found for the query.")
+    await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
+    return None, node_errors, node_messages
 
 
 async def _run_fred_resolution(

@@ -320,7 +320,7 @@ class GUSClient(DataSourceClient):
         if cached is not None:
             return cached
 
-        params: Dict[str, Any] = {}
+        params: Dict[str, Any] = {"page-size": 60}  # Fetch all children in one request
         if parent_id:
             params["parent-id"] = parent_id
 
