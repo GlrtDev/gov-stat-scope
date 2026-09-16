@@ -9,6 +9,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.models import DataSource
 from app.storage.dynamodb_saver import DynamoDBSaver
+from app.storage.session_context import load_session_context, save_session_context
 from app.workflow.nodes.analyst import analyst_agent_node
 from app.workflow.nodes.api_engineer import api_engineer_agent_node, route_after_api
 from app.workflow.nodes.error_handler import error_handler_node
@@ -70,15 +71,35 @@ async def invoke_workflow(
         elif str(forced_source).upper() in DataSource.__members__:
             normalized_forced_source = DataSource[str(forced_source).upper()]
 
-    # Seed initial state turn. Passing selected_source pre-determines routing if UI selection is supplied.
+    # Load previous context purely from DynamoDB – no frontend involvement
+    previous_context = await load_session_context(
+        table_name=memory.table_name,
+        session_id=session_id,
+        region_name=memory.region_name,
+        endpoint_url=memory.endpoint_url,
+    )
+
     input_state: Dict[str, Any] = {
         "session_id": session_id,
         "user_query": {"raw_text": query, "session_id": session_id},
         "errors": [],
+        "previous_context": previous_context,
     }
 
     if normalized_forced_source:
         input_state["selected_source"] = normalized_forced_source
 
     result = await app_graph.ainvoke(input_state, config=config)
+
+    # Persist resolved context for follow-up queries
+    resolved_context = result.get("context")
+    if resolved_context:
+        await save_session_context(
+            table_name=memory.table_name,
+            session_id=session_id,
+            context=resolved_context,
+            region_name=memory.region_name,
+            endpoint_url=memory.endpoint_url,
+        )
+
     return result

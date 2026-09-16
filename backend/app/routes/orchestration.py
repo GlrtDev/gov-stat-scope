@@ -38,7 +38,7 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
     result: dict[str, Any] = await invoke_workflow(
         query=payload.message, 
         session_id=session_id,
-        forced_source=payload.data_source
+        forced_source=payload.data_source,
     )
 
     return AskResponse(
@@ -66,7 +66,7 @@ async def ask_stream(request: Request, payload: AskRequest):
                 invoke_workflow(
                     query=payload.message,
                     session_id=session_id,
-                    forced_source=payload.data_source
+                    forced_source=payload.data_source,
                 )
             )
             yield f"event: started\ndata: {json.dumps({'session_id': session_id})}\n\n"

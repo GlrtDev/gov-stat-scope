@@ -167,6 +167,21 @@ _QUERY_STOPWORDS = {
     "pokaż", "chcę", "chciałbym", "chciałabym", "proszę",
 }
 
+_FOLLOWUP_STOPWORDS = _QUERY_STOPWORDS | {
+    "what", "about", "how", "co", "z", "w", "a", "the", "for", "in", "and", "jak"
+}
+
+
+def _is_temporal_followup(raw_text: str, previous_context: Dict[str, Any]) -> bool:
+    if not previous_context or previous_context.get("source") != "GUS":
+        return False
+    if not re.search(r"\b(?:19|20)\d{2}\b", raw_text):
+        return False
+    tokens = [
+        t for t in re.findall(r"\w+", raw_text.lower())
+        if t not in _FOLLOWUP_STOPWORDS and not t.isdigit()
+    ]
+    return len(tokens) == 0
 
 def _normalize_text(text: str) -> str:
     """Lowercase, strip diacritics, keep only letters/digits/spaces."""
@@ -393,131 +408,212 @@ def _extract_year_range(raw_text: str) -> Tuple[int, int]:
     return years[0], years[-1]
 
 
-async def _run_gus_resolution_agent(raw_text: str, session_id: str):
-    node_messages = []
-    node_errors = []
+# Add near existing constants
+BEAM_K = 5
+BEAM_G = 3
+BEAM_P = 3
+
+
+async def _run_gus_resolution_agent(
+    raw_text: str,
+    session_id: str,
+) -> Tuple[Optional[Dict[str, Any]], List[str], List[AnyMessage], Optional[Dict[str, Any]]]:
+    node_messages: List[AnyMessage] = []
+    node_errors: List[str] = []
 
     await push_progress(session_id, {"type": "gus_search_started"})
 
-    # Generate expanded keywords once (one LLM call per query)
+    # One-time LLM call for expanded lexical terms
     expanded_terms = await _generate_expanded_keywords(raw_text)
 
+    # 1. Top-level subjects (K)
     top_output = await fetch_gus_subjects.ainvoke({})
-    node_messages.append(ToolMessage(content=top_output, tool_call_id="gus-subjects-top"))
+    node_messages.append(
+        ToolMessage(content=top_output, tool_call_id="gus-subjects-top")
+    )
     top_subjects = _extract_items(top_output, "subjects", "items", "results", "data")
     if not top_subjects:
         node_errors.append("No top-level GUS subjects returned.")
         await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
         return None, node_errors, node_messages
 
-    top_candidates = await _rank_candidates(top_subjects, raw_text, "top-level GUS subject",
-                                            top_n=5, expanded_terms=expanded_terms)
+    k_candidates = await _rank_candidates(
+        top_subjects,
+        raw_text,
+        "top-level GUS subject",
+        top_n=BEAM_K,
+        expanded_terms=expanded_terms,
+    )
 
-    keywords = await _extract_gus_keywords(raw_text)  # separate, for variable search
-
-    for k_index, k_subject in enumerate(top_candidates):
+    for k_index, k_subject in enumerate(k_candidates):
         k_id = _item_id(k_subject)
         k_name = _item_name(k_subject)
-        await push_progress(session_id, {"type": "subject_selected", "level": "K",
-                                         "subject_id": k_id, "name": k_name})
-
-        current_subject = k_subject
-        for _ in range(2):
-            subject_id = _item_id(current_subject)
-            if not subject_id or _subject_level(subject_id) == "P":
-                break
-
-            children_output = await fetch_gus_subjects.ainvoke({"parent_id": subject_id})
-            node_messages.append(ToolMessage(content=children_output,
-                                             tool_call_id=f"gus-children-{subject_id}"))
-            children = _extract_items(children_output, "subjects", "items", "results", "data")
-            if not children:
-                break
-
-            selected_child = await _select_best_item(children, raw_text,
-                                                      f"GUS child subject under {subject_id}",
-                                                      expanded_terms=expanded_terms)
-            if selected_child is None:
-                break
-
-            current_subject = selected_child
-            child_id = _item_id(selected_child)
-            await push_progress(session_id, {"type": "subject_selected",
-                                             "level": _subject_level(child_id),
-                                             "subject_id": child_id,
-                                             "name": _item_name(selected_child)})
-
-        final_id = _item_id(current_subject)
-        if not final_id or _subject_level(final_id) != "P":
-            continue
-
-        variables_output = None
-        variables = []
-        for keyword in keywords:
-            try:
-                variables_output = await fetch_gus_variables.ainvoke({
-                    "subject_id": final_id,
-                    "query": keyword,
-                })
-            except Exception:
-                continue
-            variables = _extract_items(variables_output, "variables", "items", "results", "data")
-            if variables:
-                break
-
-        if variables_output is not None:
-            node_messages.append(ToolMessage(content=variables_output,
-                                             tool_call_id=f"gus-variables-{final_id}"))
-        if not variables:
-            continue
-
-        selected_variable = await _select_best_item(variables, raw_text, "GUS variable",
-                                                    expanded_terms=expanded_terms)
-        if selected_variable is None:
-            continue
-
-        variable_id = _item_id(selected_variable)
-        variable_name = _item_name(selected_variable)
-        if not variable_id:
-            continue
-
-        await push_progress(session_id, {"type": "variable_selected",
-                                         "variable_id": variable_id,
-                                         "name": variable_name})
-
-        year_start, year_end = _extract_year_range(raw_text)
-        data_output = await fetch_gus_data.ainvoke({
-            "variable_id": variable_id,
-            "variable_name": variable_name,
-            "year_start": year_start,
-            "year_end": year_end,
+        await push_progress(session_id, {
+            "type": "subject_selected",
+            "level": "K",
+            "subject_id": k_id,
+            "name": k_name,
         })
-        node_messages.append(ToolMessage(content=data_output, tool_call_id=f"gus-data-{variable_id}"))
 
-        parsed_data = _parse_json_payload(data_output)
-        if parsed_data is None:
-            node_errors.append("fetch_gus_data returned invalid JSON.")
+        # 2. Fetch children of K (G-level)
+        children_output = await fetch_gus_subjects.ainvoke({"parent_id": k_id})
+        node_messages.append(
+            ToolMessage(
+                content=children_output,
+                tool_call_id=f"gus-children-{k_id}",
+            )
+        )
+        g_subjects = _extract_items(
+            children_output, "subjects", "items", "results", "data"
+        )
+        if not g_subjects:
             continue
 
-        if isinstance(parsed_data, dict) and "error" in parsed_data:
-            node_errors.append(str(parsed_data["error"]))
-            continue
+        g_candidates = await _rank_candidates(
+            g_subjects,
+            raw_text,
+            f"GUS child subject under {k_id}",
+            top_n=BEAM_G,
+            expanded_terms=expanded_terms,
+        )
 
-        if isinstance(parsed_data, dict):
-            await push_progress(session_id, {"type": "data_fetched",
-                                             "variable_id": variable_id,
-                                             "years": [year_start, year_end]})
-            return parsed_data, node_errors, node_messages
+        for g_index, g_subject in enumerate(g_candidates):
+            g_id = _item_id(g_subject)
+            g_name = _item_name(g_subject)
+            await push_progress(session_id, {
+                "type": "subject_selected",
+                "level": "G",
+                "subject_id": g_id,
+                "name": g_name,
+            })
+
+            # 3. Fetch children of G (P-level)
+            p_output = await fetch_gus_subjects.ainvoke({"parent_id": g_id})
+            node_messages.append(
+                ToolMessage(
+                    content=p_output,
+                    tool_call_id=f"gus-children-{g_id}",
+                )
+            )
+            p_subjects = _extract_items(
+                p_output, "subjects", "items", "results", "data"
+            )
+            if not p_subjects:
+                continue
+
+            p_candidates = await _rank_candidates(
+                p_subjects,
+                raw_text,
+                f"GUS P-level subject under {g_id}",
+                top_n=BEAM_P,
+                expanded_terms=expanded_terms,
+            )
+
+            for p_index, p_subject in enumerate(p_candidates):
+                p_id = _item_id(p_subject)
+                p_name = _item_name(p_subject)
+                await push_progress(session_id, {
+                    "type": "subject_selected",
+                    "level": "P",
+                    "subject_id": p_id,
+                    "name": p_name,
+                })
+
+                # 4. Search variables under this P subject
+                variables_output = None
+                variables: List[Dict[str, Any]] = []
+                for term in expanded_terms:
+                    try:
+                        variables_output = await fetch_gus_variables.ainvoke({
+                            "subject_id": p_id,
+                            "query": term,
+                        })
+                    except Exception:
+                        continue
+
+                    variables = _extract_items(
+                        variables_output, "variables", "items", "results", "data"
+                    )
+                    if variables:
+                        break
+
+                if variables_output is not None:
+                    node_messages.append(
+                        ToolMessage(
+                            content=variables_output,
+                            tool_call_id=f"gus-variables-{p_id}",
+                        )
+                    )
+                if not variables:
+                    continue
+
+                # 5. Select best variable and fetch data
+                selected_variable = await _select_best_item(
+                    variables,
+                    raw_text,
+                    "GUS variable",
+                    expanded_terms=expanded_terms,
+                )
+                if selected_variable is None:
+                    continue
+
+                variable_id = _item_id(selected_variable)
+                variable_name = _item_name(selected_variable)
+                if not variable_id:
+                    continue
+
+                await push_progress(session_id, {
+                    "type": "variable_selected",
+                    "variable_id": variable_id,
+                    "name": variable_name,
+                })
+
+                year_start, year_end = _extract_year_range(raw_text)
+                data_output = await fetch_gus_data.ainvoke({
+                    "variable_id": variable_id,
+                    "variable_name": variable_name,
+                    "year_start": year_start,
+                    "year_end": year_end,
+                })
+                node_messages.append(
+                    ToolMessage(
+                        content=data_output,
+                        tool_call_id=f"gus-data-{variable_id}",
+                    )
+                )
+
+                parsed_data = _parse_json_payload(data_output)
+                if parsed_data is None:
+                    node_errors.append("fetch_gus_data returned invalid JSON.")
+                    continue
+
+                if isinstance(parsed_data, dict) and "error" in parsed_data:
+                    node_errors.append(str(parsed_data["error"]))
+                    continue
+
+                if isinstance(parsed_data, dict):
+                    await push_progress(session_id, {
+                        "type": "data_fetched",
+                        "variable_id": variable_id,
+                        "years": [year_start, year_end],
+                    })
+                    resolved_context = {
+                        "source": "GUS",
+                        "subject_id": p_id,
+                        "variable_id": variable_id,
+                        "variable_name": variable_name,
+                    }
+                    return parsed_data, node_errors, node_messages, resolved_context
 
     node_errors.append("No suitable GUS subject/variable combination found for the query.")
     await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
-    return None, node_errors, node_messages
+    return None, node_errors, node_messages, None
 
 
 async def _run_fred_resolution(
     raw_text: str,
     session_id: str,
-) -> Tuple[Optional[Dict[str, Any]], List[str], List[AnyMessage]]:
+) -> Tuple[Optional[Dict[str, Any]], List[str], List[AnyMessage], Optional[Dict[str, Any]]]:
     """Use the single-tool FRED resolution flow."""
     await push_progress(session_id, {"type": "fred_started"})
 
@@ -564,7 +660,11 @@ async def _run_fred_resolution(
             node_errors.append(f"FRED tool execution failed: {str(e)}")
             await push_progress(session_id, {"type": "error", "message": node_errors[-1]})
 
-    return normalized_data, node_errors, node_messages
+        resolved_context = {
+            "source": "FRED",
+            "series_id": output_dict.get("series_id") or output_dict.get("id"),
+        }
+        return normalized_data, node_errors, node_messages, resolved_context
 
 
 async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
@@ -572,20 +672,48 @@ async def api_engineer_agent_node(state: OrchestratorState) -> Dict[str, Any]:
     source = state.get("selected_source", "UNKNOWN")
     raw_text = _extract_query_string(state.get("user_query", ""))
     session_id = state.get("session_id", "")
+    previous_context = state.get("previous_context") or {}
 
     if not raw_text:
         await push_progress(session_id, {"type": "error", "message": "API Engineer received an empty query."})
-        return {"errors": ["API Engineer received an empty query."]}
+        return {"errors": ["API Engineer received an empty query."], "context": None}
+
+    # Temporal follow-up: reuse saved GUS variable if query mentions a new year
+    if source == "GUS" and _is_temporal_followup(raw_text, previous_context):
+        year_start, year_end = _extract_year_range(raw_text)
+        try:
+            data_output = await fetch_gus_data.ainvoke({
+                "variable_id": previous_context["variable_id"],
+                "variable_name": previous_context["variable_name"],
+                "year_start": year_start,
+                "year_end": year_end,
+            })
+            parsed = _parse_json_payload(data_output)
+            if parsed and isinstance(parsed, dict) and "error" not in parsed:
+                await push_progress(session_id, {
+                    "type": "context_reused",
+                    "variable_id": previous_context["variable_id"],
+                    "years": [year_start, year_end],
+                })
+                return {
+                    "messages": [ToolMessage(content=data_output, tool_call_id="gus-data-reused")],
+                    "normalized_data": parsed,
+                    "errors": [],
+                    "context": previous_context,
+                }
+        except Exception:
+            pass  # fall back to full resolution
 
     if source == "FRED":
-        normalized_data, node_errors, node_messages = await _run_fred_resolution(raw_text, session_id)
+        normalized_data, node_errors, node_messages, resolved_context = await _run_fred_resolution(raw_text, session_id)
     else:
-        normalized_data, node_errors, node_messages = await _run_gus_resolution_agent(raw_text, session_id)
+        normalized_data, node_errors, node_messages, resolved_context = await _run_gus_resolution_agent(raw_text, session_id)
 
     return {
         "messages": node_messages,
         "normalized_data": normalized_data,
         "errors": node_errors,
+        "context": resolved_context,
     }
 
 

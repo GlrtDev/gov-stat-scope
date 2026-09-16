@@ -22,3 +22,5 @@ class OrchestratorState(TypedDict):
     final_answer: Optional[str]
     errors: Annotated[List[str], operator.add]
     metadata: Dict[str, Any]
+    previous_context: Optional[Dict[str, Any]]
+    context: Optional[Dict[str, Any]]

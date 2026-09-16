@@ -59,17 +59,23 @@ class DynamoDBSaver(BaseCheckpointSaver):
                     TableName=self.table_name,
                     Key={"session_id": {"S": session_id}, "checkpoint_id": {"S": checkpoint_id}},
                 )
-                return response.get("Item")
+                item = response.get("Item")
+                if item and "checkpoint" in item and "metadata" in item:
+                    return item
+                return None
             else:
                 response = client.query(
                     TableName=self.table_name,
                     KeyConditionExpression="session_id = :sid",
                     ExpressionAttributeValues={":sid": {"S": session_id}},
                     ScanIndexForward=False,
-                    Limit=1,
+                    Limit=10,
                 )
-                items = response.get("Items", [])
-                return items[0] if items else None
+                # Skip context rows (like "__context__") that have no checkpoint blob
+                for item in response.get("Items", []):
+                    if "checkpoint" in item and "metadata" in item:
+                        return item
+                return None
 
         item = await run_in_threadpool(_sync_get)
         if not item:
