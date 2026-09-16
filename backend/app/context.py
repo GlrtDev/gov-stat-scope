@@ -13,12 +13,23 @@ from contextvars import ContextVar
 
 _request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 _trace_id_ctx: ContextVar[str | None] = ContextVar("trace_id", default=None)
+_session_id_ctx: ContextVar[str | None] = ContextVar("session_id", default=None)
 
 
 def set_request_context(request_id: str, trace_id: str) -> None:
     """Bind the IDs for the current request to this async context."""
     _request_id_ctx.set(request_id)
     _trace_id_ctx.set(trace_id)
+
+
+def set_session_id(session_id: str) -> None:
+    """Bind the session ID for quota attribution."""
+    _session_id_ctx.set(session_id)
+
+
+def get_session_id() -> str | None:
+    """Return the current session ID, or None if no request is active."""
+    return _session_id_ctx.get()
 
 
 def get_request_id() -> str | None:

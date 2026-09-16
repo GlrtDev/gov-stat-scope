@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from app.services.llm_quota import LLMQuotaExceeded
 from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException
 
@@ -89,6 +90,16 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
     return JSONResponse(status_code=500, content=payload, media_type="application/problem+json")
 
+async def llm_quota_handler(request: Request, exc: LLMQuotaExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "LLMQuotaExceeded",
+            "message": str(exc),
+            "retry_after_seconds": exc._seconds_until_utc_midnight(),
+        },
+        headers={"Retry-After": str(exc._seconds_until_utc_midnight())},
+    )
 
 def add_exception_handlers(app: FastAPI) -> None:
     """Registers all global exception handlers to the FastAPI application instance."""
@@ -98,3 +109,4 @@ def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(RateLimitExceeded, rate_limit_error_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, global_exception_handler)
+    app.add_exception_handler(LLMQuotaExceeded, llm_quota_handler)

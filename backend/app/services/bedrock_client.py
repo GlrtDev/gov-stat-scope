@@ -12,6 +12,8 @@ from botocore.exceptions import ClientError
 from pydantic import BaseModel, Field, ValidationError, create_model
 from starlette.concurrency import run_in_threadpool
 from tenacity import retry, retry_if_exception_type, stop_after_attempt
+from app.context import get_session_id
+from app.services.llm_quota import DynamoDBLLMQuota, LLMQuotaExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +44,15 @@ class AsyncBedrockClient:
 
     def __init__(self, region_name: str = "us-east-1") -> None:
         self.region_name = region_name
+        self._quota = DynamoDBLLMQuota()
 
     async def _invoke_converse(self, **kwargs: Any) -> Dict[str, Any]:
         """Wraps the Boto3 Bedrock Converse API with outage and throttling fallbacks."""
+        # Enforce daily LLM quota — counts every call, even retries
+        scope_id = get_session_id() or "anonymous"
+        result = await self._quota.check_and_increment_async(scope_id)
+        if not result["allowed"]:
+            raise LLMQuotaExceeded(limit=result["limit"], used=result["used"])
         def _sync_call() -> Dict[str, Any]:
             client = boto3.client("bedrock-runtime", region_name=self.region_name)
             return client.converse(**kwargs)

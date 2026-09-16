@@ -7,15 +7,16 @@ import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from app.context import get_request_id, get_trace_id
+from app.context import get_request_id, get_trace_id, set_session_id
 from app.logging_config import get_logger
 from app.models import AskRequest, AskResponse, DataSource
 from app.rate_limiter import limiter
 from app.workflow.graph import invoke_workflow
 from app.workflow.progress import register_progress_queue, unregister_progress_queue
+from app.services.llm_quota import LLMQuotaExceeded
 
 router = APIRouter(prefix="/api/v1", tags=["Orchestration"])
 
@@ -25,6 +26,7 @@ router = APIRouter(prefix="/api/v1", tags=["Orchestration"])
 async def ask(request: Request, payload: AskRequest) -> AskResponse:
     """Accept a user query and execute the LangGraph orchestrator workflow."""
     session_id = payload.session_id or uuid.uuid4().hex
+    set_session_id(session_id)
 
     get_logger().info(
         "ask_received",
@@ -34,12 +36,14 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
             "forced_source": payload.data_source,
         },
     )
-
-    result: dict[str, Any] = await invoke_workflow(
-        query=payload.message, 
-        session_id=session_id,
-        forced_source=payload.data_source,
-    )
+    try:
+        result: dict[str, Any] = await invoke_workflow(
+            query=payload.message,
+            session_id=session_id,
+            forced_source=payload.data_source,
+        )
+    except LLMQuotaExceeded as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
 
     return AskResponse(
         answer=result.get("final_answer", "No analysis result was produced."),
@@ -58,6 +62,7 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
 async def ask_stream(request: Request, payload: AskRequest):
     """Stream progress events while executing the workflow via SSE."""
     session_id = payload.session_id or uuid.uuid4().hex
+    set_session_id(session_id)  # propagate to bedrock_client for quota
     queue = register_progress_queue(session_id)
 
     async def event_generator():
@@ -76,7 +81,11 @@ async def ask_stream(request: Request, payload: AskRequest):
                     event = await asyncio.wait_for(queue.get(), timeout=0.5)
                 except asyncio.TimeoutError:
                     if task.done():
-                        result = task.result()
+                        try:
+                            result = task.result()
+                        except LLMQuotaExceeded as exc:
+                            yield f"event: error\ndata: {json.dumps({'error': str(exc)})}\n\n"
+                            break
                         safe_payload = {
                             "session_id": session_id,
                             "final_answer": result.get("final_answer"),

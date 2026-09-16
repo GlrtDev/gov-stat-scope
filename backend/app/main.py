@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from app.errors import add_exception_handlers
+from app.ddos import DDoSPreventionMiddleware, SecurityHeadersMiddleware
 from app.logging_config import configure_logging
 from app.middleware import RequestContextMiddleware
 from app.rate_limiter import limiter
@@ -25,7 +26,6 @@ from app.storage.dynamodb_saver import init_dynamodb_tables
 
 configure_logging()
 logger = logging.getLogger(__name__)
-
 
 class TimeoutMiddleware(BaseHTTPMiddleware):
     """Enforce a global request timeout to prevent hanging connections."""
@@ -110,6 +110,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 # Apply global exception handlers
 add_exception_handlers(app)
 
@@ -136,6 +137,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Order matters: last added runs first, so DDoS guard runs outermost
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    DDoSPreventionMiddleware,
+    blocked_ips=set(),      
+    allowed_ips=set(), # for admin routes
+    redis=None, 
 )
 
 app.include_router(core_router)
