@@ -17,4 +17,4 @@ async def test_gus_live_resolve_and_fetch() -> None:
         assert normalized.metric_name != ""
         assert len(normalized.values) > 0
     finally:
-        await client.close()
+        await client.aclose()

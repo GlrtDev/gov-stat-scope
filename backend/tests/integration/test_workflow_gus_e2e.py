@@ -43,34 +43,14 @@ def setup_integration_env(monkeypatch: MonkeyPatch) -> Generator[None, None, Non
     monkeypatch.setenv("LLM_MODEL", os.getenv("LLM_MODEL", "qwen3.8-27b"))
     monkeypatch.setenv("OPENAI_API_BASE", os.getenv("OPENAI_API_BASE", "http://host.docker.internal:1234/v1"))
     monkeypatch.setenv("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "lm-studio"))
+    monkeypatch.setenv("DYNAMODB_ENDPOINT", DYNAMODB_ENDPOINT)
+    monkeypatch.delenv("AWS_SESSION_TOKEN", raising=False)
+    monkeypatch.delenv("AWS_SECURITY_TOKEN", raising=False)
 
     if not os.getenv("GUS_API_KEY"):
         monkeypatch.setenv("GUS_API_KEY", "test-key")
 
     yield
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def setup_workflow_checkpointer() -> AsyncGenerator[None, None]:
-    """Ensure the sessions table exists and route the global graph checkpointer to it."""
-    await init_dynamodb_tables(
-        table_name=TABLE_NAME,
-        region_name="us-east-1",
-        endpoint_url=DYNAMODB_ENDPOINT,
-    )
-
-    saver = DynamoDBSaver(
-        table_name=TABLE_NAME,
-        region_name="us-east-1",
-        endpoint_url=DYNAMODB_ENDPOINT,
-    )
-
-    original_checkpointer = app.workflow.graph.app_graph.checkpointer
-    app.workflow.graph.app_graph.checkpointer = saver
-
-    yield
-
-    app.workflow.graph.app_graph.checkpointer = original_checkpointer
 
 
 def _contains_numeric_value(data: object, expected: float, tolerance: float = 0.01) -> bool:
@@ -102,3 +82,5 @@ async def test_workflow_gus_pszenica_price_2017_e2e() -> None:
     assert _contains_numeric_value(result["normalized_data"], 66.44), (
         f"Expected 66.44 in normalized data, got: {result['normalized_data']}"
     )
+
+    # TODO add follow up question like "a jaka w 2018?"

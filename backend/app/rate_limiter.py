@@ -18,12 +18,15 @@ limiter = Limiter(key_func=get_rate_limit_key)
 
 
 def rate_limit_error_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
-    """Format RFC-compliant rate limit error payload."""
+    """Format RFC 7807-compliant rate limit error payload."""
     return JSONResponse(
         status_code=429,
         content={
-            "error": "RateLimitExceeded",
-            "message": f"Rate limit exceeded: {exc.detail}",
+            "type": "urn:govdata:error:rate-limit",
+            "title": "Rate Limit Exceeded",
+            "status": 429,
+            "detail": f"Rate limit exceeded: {exc.detail}",
             "path": request.url.path,
         },
+        media_type="application/problem+json",
     )

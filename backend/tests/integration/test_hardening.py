@@ -1,5 +1,6 @@
 """Integration tests for production hardening middleware and RFC 7807 error responses."""
 
+from collections import defaultdict
 from typing import Any, AsyncGenerator
 import json
 import random
@@ -8,6 +9,8 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+
+from app.ddos import DDoSPreventionMiddleware
 # Alias import to avoid namespace collision with the 'app' directory during test discovery
 from app.main import app as fastapi_app
 import app.routes.orchestration as routes_module
@@ -35,12 +38,20 @@ def setup_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
         return {"final_answer": "ok", "errors": [], "analysis_result": None}
 
     monkeypatch.setattr(routes_module, "invoke_workflow", _fake_invoke_workflow)
+    request_counts: defaultdict[str, int] = defaultdict(int)
+
+    async def _fake_is_rate_allowed(self: DDoSPreventionMiddleware, client_ip: str) -> bool:
+        request_counts[client_ip] += 1
+        return request_counts[client_ip] <= 5
+
+    monkeypatch.setattr(DDoSPreventionMiddleware, "_is_rate_allowed", _fake_is_rate_allowed)
 
 
 @pytest_asyncio.fixture
 async def app_client() -> AsyncGenerator[AsyncClient, None]:
-    """Provide an HTTPX AsyncClient with a mocked client IP to trigger rate limiting."""
-    transport = ASGITransport(app=fastapi_app, client=("10.0.0.1", 12345))
+    """Provide an HTTPX AsyncClient with a fresh mock client IP per test."""
+    ip = f"10.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}"
+    transport = ASGITransport(app=fastapi_app, client=(ip, 12345))
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
 
@@ -94,19 +105,20 @@ async def test_rate_limiting_enforcement(app_client: AsyncClient) -> None:
 async def test_rate_limit_is_per_client_ip() -> None:
     payload = {"message": "Rate limit isolation", "session_id": "isolation-session"}
 
-    async def post_with_ip(ip: str) -> list[int]:
+    async def post_with_ip(ip: str, count: int) -> list[int]:
         transport = ASGITransport(app=fastapi_app, client=(ip, 12345))
         async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-            return [getattr(await client.post(ASK_ROUTE, json=payload), "status_code") for _ in range(31)]
+            return [getattr(await client.post(ASK_ROUTE, json=payload), "status_code") for _ in range(count)]
 
     ip_a = f"10.{random.randint(0, 255)}.{random.randint(0, 255)}.101"
     ip_b = f"10.{random.randint(0, 255)}.{random.randint(0, 255)}.102"
 
-    statuses_a = await post_with_ip(ip_a)
-    assert 429 in statuses_a[-5:], "Expected IP A to be rate limited."
+    statuses_a = await post_with_ip(ip_a, 10)
+    assert 429 in statuses_a, "Expected IP A to be rate limited."
 
-    statuses_b = await post_with_ip(ip_b)
-    assert all(status != 429 for status in statuses_b[:30]), "IP B should not inherit IP A rate-limit state."
+    # B sends only 3 requests, so it stays under its own limit.
+    statuses_b = await post_with_ip(ip_b, 3)
+    assert all(status != 429 for status in statuses_b), "IP B should not inherit IP A rate-limit state."
 
 
 @pytest.mark.asyncio

@@ -9,7 +9,7 @@ import logging
 import os
 import time
 from functools import wraps
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Optional, Tuple, TypeVar
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -21,18 +21,33 @@ F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
 _client: Any = None
 
 
-def _get_client(region_name: Optional[str]) -> Any:
-    global _client
-    if _client is None:
-        _client = boto3.client(
-            "dynamodb",
-            region_name=(
-                region_name
-                or os.getenv("AWS_REGION")
-                or os.getenv("AWS_DEFAULT_REGION")
-            ),
-        )
-    return _client
+_client_cache: Dict[Tuple[Optional[str], Optional[str]], Any] = {}
+
+def _get_client(
+    region_name: Optional[str],
+    endpoint_url: Optional[str] = None,
+) -> Any:
+    resolved_endpoint = endpoint_url or os.getenv("DYNAMODB_ENDPOINT")
+    resolved_region = (
+        region_name
+        or os.getenv("AWS_REGION")
+        or os.getenv("AWS_DEFAULT_REGION")
+        or "us-east-1"
+    )
+    key = (resolved_region, resolved_endpoint)
+    client = _client_cache.get(key)
+    if client is None:
+        kwargs: Dict[str, Any] = {"region_name": resolved_region}
+        if resolved_endpoint:
+            kwargs.update(
+                endpoint_url=resolved_endpoint,
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID", "dummy"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY", "dummy"),
+                aws_session_token=None,
+            )
+        client = boto3.client("dynamodb", **kwargs)
+        _client_cache[key] = client
+    return client
 
 
 def _sort_dict(value: Any) -> Any:
@@ -73,12 +88,13 @@ def _request_key(method: str, path: str, kwargs: Dict[str, Any]) -> str:
 def _get_cached(
     table_name: str,
     region_name: Optional[str],
+    endpoint_url: Optional[str],
     key: str,
 ) -> Optional[Any]:
     if not table_name:
         return None
 
-    client = _get_client(region_name)
+    client = _get_client(region_name, endpoint_url)
     response = client.get_item(
         TableName=table_name,
         Key={"pk": {"S": f"GUS#{key}"}},
@@ -102,6 +118,7 @@ def _get_cached(
 def _put_cached(
     table_name: str,
     region_name: Optional[str],
+    endpoint_url: Optional[str],
     key: str,
     method: str,
     path: str,
@@ -139,7 +156,7 @@ def _put_cached(
             default=str,
         )
 
-    client = _get_client(region_name)
+    client = _get_client(region_name, endpoint_url)
     client.put_item(
         TableName=table_name,
         Item={
@@ -158,6 +175,7 @@ def dynamodb_cache(
     ttl_days: int = 7,
     table_name: Optional[str] = None,
     region_name: Optional[str] = None,
+    endpoint_url: Optional[str] = None,
 ) -> Callable[[F], F]:
     """Cache async method responses in DynamoDB with a TTL.
 
@@ -167,6 +185,12 @@ def dynamodb_cache(
             ...
     """
 
+def dynamodb_cache(
+    ttl_days: int = 7,
+    table_name: Optional[str] = None,
+    region_name: Optional[str] = None,
+    endpoint_url: Optional[str] = None,
+) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(func)
         async def wrapper(
@@ -180,6 +204,7 @@ def dynamodb_cache(
                 or os.getenv("GUS_CACHE_TABLE")
                 or "govstat-gus-cache"
             )
+            resolved_endpoint = endpoint_url or os.getenv("DYNAMODB_ENDPOINT")
 
             if os.getenv("GUS_CACHE_DISABLED", "").lower() in {"1", "true", "yes"}:
                 return await func(self, method, path, **kwargs)
@@ -192,19 +217,13 @@ def dynamodb_cache(
                     _get_cached,
                     cache_table,
                     region_name,
+                    resolved_endpoint,
                     cache_key,
                 )
                 if cached is not None:
-                    logger.debug(
-                        "GUS DynamoDB cache hit for %s %s",
-                        method.upper(),
-                        path,
-                    )
                     return cached
             except (BotoCoreError, ClientError, ValueError, TypeError):
-                logger.exception(
-                    "GUS DynamoDB cache read failed; falling back to network"
-                )
+                logger.exception("GUS DynamoDB cache read failed; falling back to network")
 
             response = await func(self, method, path, **kwargs)
 
@@ -214,6 +233,7 @@ def dynamodb_cache(
                     _put_cached,
                     cache_table,
                     region_name,
+                    resolved_endpoint,
                     cache_key,
                     method,
                     path,
@@ -222,9 +242,7 @@ def dynamodb_cache(
                     ttl_days,
                 )
             except (BotoCoreError, ClientError, ValueError, TypeError):
-                logger.exception(
-                    "GUS DynamoDB cache write failed; ignoring"
-                )
+                logger.exception("GUS DynamoDB cache write failed; ignoring")
 
             return response
 

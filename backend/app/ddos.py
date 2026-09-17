@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import json
 import os
 import re
 import time
@@ -252,12 +253,31 @@ class DDoSPreventionMiddleware:
         retry_after: Optional[int] = None,
     ) -> None:
         headers = [
-            (b"content-type", b"application/json"),
+            (b"content-type", b"application/problem+json"),
             (b"x-ddos-guard", b"blocked"),
         ]
         if retry_after:
             headers.append((b"retry-after", str(retry_after).encode()))
-        response_body = f'{{"error": "{reason}"}}'.encode()
+
+        problem_type = {
+            400: "urn:govdata:error:bad-request",
+            403: "urn:govdata:error:forbidden",
+            405: "urn:govdata:error:method-not-allowed",
+            408: "urn:govdata:error:timeout",
+            413: "urn:govdata:error:payload-too-large",
+            414: "urn:govdata:error:uri-too-long",
+            429: "urn:govdata:error:rate-limit",
+        }.get(status_code, "urn:govdata:error:blocked")
+
+        response_body = json.dumps(
+            {
+                "type": problem_type,
+                "title": reason,
+                "status": status_code,
+                "detail": reason,
+            }
+        ).encode()
+
         await send(
             {
                 "type": "http.response.start",

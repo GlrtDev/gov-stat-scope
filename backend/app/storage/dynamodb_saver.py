@@ -17,6 +17,21 @@ from langgraph.checkpoint.base import (
 )
 from starlette.concurrency import run_in_threadpool
 
+def _dynamodb_client(region_name: str, endpoint_url: Optional[str]) -> Any:
+    """Create a DynamoDB client.
+
+    For local endpoints (DynamoDB Local/LocalStack), inject dummy credentials
+    and clear the session token. Production uses the default AWS credential chain.
+    """
+    kwargs: Dict[str, Any] = {"region_name": region_name}
+    if endpoint_url:
+        kwargs.update(
+            endpoint_url=endpoint_url,
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID", "dummy"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY", "dummy"),
+            aws_session_token=None,
+        )
+    return boto3.client("dynamodb", **kwargs)
 
 class DynamoDBSaver(BaseCheckpointSaver):
     """Asynchronous DynamoDB Checkpoint Saver supporting custom endpoints for testing."""
@@ -53,7 +68,7 @@ class DynamoDBSaver(BaseCheckpointSaver):
         checkpoint_id = config["configurable"].get("checkpoint_id")
 
         def _sync_get() -> Optional[Dict[str, Any]]:
-            client = boto3.client("dynamodb", region_name=self.region_name, endpoint_url=self.endpoint_url)
+            client = _dynamodb_client(self.region_name, self.endpoint_url)
             if checkpoint_id:
                 response = client.get_item(
                     TableName=self.table_name,
@@ -115,7 +130,7 @@ class DynamoDBSaver(BaseCheckpointSaver):
             item["parent_checkpoint_id"] = {"S": parent_id}
 
         def _sync_put() -> None:
-            client = boto3.client("dynamodb", region_name=self.region_name, endpoint_url=self.endpoint_url)
+            client = _dynamodb_client(self.region_name, self.endpoint_url)
             client.put_item(TableName=self.table_name, Item=item)
 
         await run_in_threadpool(_sync_put)
@@ -130,7 +145,7 @@ class DynamoDBSaver(BaseCheckpointSaver):
         session_id = config["configurable"]["thread_id"]
 
         def _sync_list() -> List[Dict[str, Any]]:
-            client = boto3.client("dynamodb", region_name=self.region_name, endpoint_url=self.endpoint_url)
+            client = _dynamodb_client(self.region_name, self.endpoint_url)
             kwargs: Dict[str, Any] = {
                 "TableName": self.table_name,
                 "KeyConditionExpression": "session_id = :sid",
@@ -162,7 +177,7 @@ async def init_dynamodb_tables(table_name: str, region_name: str = "us-east-1", 
     resolved_endpoint = endpoint_url or os.getenv("DYNAMODB_ENDPOINT")
 
     def _sync_init() -> None:
-        client = boto3.client("dynamodb", region_name=region_name, endpoint_url=resolved_endpoint)
+        client = _dynamodb_client(region_name, resolved_endpoint)
         try:
             client.create_table(
                 TableName=table_name,
