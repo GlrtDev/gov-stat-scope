@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, List
 
 import httpx
@@ -213,3 +214,45 @@ def mock_gus_api_responses(monkeypatch):
     monkeypatch.setattr(GUSClient, "_request", _mocked_request)
 
     return calls
+
+@pytest.fixture
+def mock_gus_tool_responses(monkeypatch):
+    """Patch workflow tool wrappers to return JSON strings loaded from fixtures.
+
+    Missing subject fixtures are treated as empty children so a wrong beam path
+    is recorded as a routing failure instead of raising FileNotFoundError.
+    """
+
+    async def _fetch_subjects(payload: dict) -> str:
+        parent_id = payload.get("parent_id") or payload.get("parentId")
+        if parent_id is None:
+            path = _RESOURCE_DIR / "get_subjects_page_0_page_size_100.json"
+        else:
+            path = _RESOURCE_DIR / f"get_subjects_parent_id_{parent_id}.json"
+        if not path.exists():
+            return json.dumps({"subjects": []})
+        raw = path.read_text(encoding="utf-8")
+        start = raw.find("{")
+        if start == -1:
+            return json.dumps({"subjects": []})
+        return raw[start:]
+
+    async def _fetch_variables(payload: dict) -> str:
+        return json.dumps({"variables": [{"id": "VAR001", "name": "Test variable"}]})
+
+    async def _fetch_data(payload: dict) -> str:
+        return json.dumps({"data": [{"year": payload["year_start"], "value": 100}]})
+
+    monkeypatch.setattr(
+        "app.workflow.nodes.api_engineer.gus_resolver.fetch_gus_subjects",
+        SimpleNamespace(ainvoke=_fetch_subjects),
+    )
+    monkeypatch.setattr(
+        "app.workflow.nodes.api_engineer.gus_resolver.fetch_gus_variables",
+        SimpleNamespace(ainvoke=_fetch_variables),
+    )
+    monkeypatch.setattr(
+        "app.workflow.nodes.api_engineer.gus_resolver.fetch_gus_data",
+        SimpleNamespace(ainvoke=_fetch_data),
+    )
+    return None
