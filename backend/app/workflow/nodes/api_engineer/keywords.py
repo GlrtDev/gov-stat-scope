@@ -17,11 +17,15 @@ async def _generate_expanded_keywords(raw_text: str) -> List[str]:
     """Use LLM to generate 10-20 Polish terms for robust lexical matching."""
     llm = get_llm(temperature=0.0)
     prompt = (
-        "Generate 10 to 20 distinct Polish words or short phrases that would appear in "
-        "statistical variable names related to the user request. Include synonyms, "
-        "inflected forms (e.g., 'cena', 'ceny', 'cen'), and domain terms. "
-        "Exclude city names, region names, or administrative units. "
-        "Return a JSON list of strings.\n\n"
+        "Generate 15 to 30 distinct Polish words or short phrases for searching statistical variable names "
+        "and dataset metadata related to the user request. Include a balanced mix of:\n"
+        "1. Direct keywords and inflected forms (e.g., 'cena', 'ceny', 'pszenica', 'pszenicy')\n"
+        "2. Hypernyms, entity classifications, and broader product categories (e.g., 'produkt rolny', 'płod rolny', 'artykuł spożywczy', 'towar')\n"
+        "3. High-level domain, industry, and macro-sector terms (e.g., 'rolnictwo', 'uprawy', 'rynki rolne')\n"
+        "4. General statistical indicators and transactional context (e.g., 'skup', 'notowania', 'wartość', 'produkcja')\n\n"
+        "Rules:\n"
+        "- Cover specific terms, broader entity/product classifications, broad domains, and statistical metrics.\n"
+        "- Exclude city names, region names, administrative units, and specific years/dates.\n\n"
         f"User request: {raw_text}\n\n"
         'Respond with only JSON: {"terms": ["term1", "term2", ...]}'
     )

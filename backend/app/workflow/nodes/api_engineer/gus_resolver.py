@@ -7,8 +7,8 @@ from langchain_core.messages import AnyMessage, ToolMessage
 
 from app.workflow.nodes.api_engineer.constants import BEAM_G, BEAM_K, BEAM_P
 from app.workflow.nodes.api_engineer.dates import _extract_year_range
-from app.workflow.nodes.api_engineer.keywords import _generate_expanded_keywords
-from app.workflow.nodes.api_engineer.matching import _rank_candidates, _select_best_item
+from app.workflow.nodes.api_engineer.keywords import _generate_expanded_keywords, _query_terms
+from app.workflow.nodes.api_engineer.matching import _rank_candidates, _select_best_item, _score_item
 from app.workflow.nodes.api_engineer.parsing import (
     _extract_items,
     _item_id,
@@ -32,14 +32,12 @@ async def _run_gus_resolution_agent(
     node_errors: List[str] = []
     await push_progress(session_id, {"type": "gus_search_started"})
 
-    # One-time LLM call for expanded lexical terms
     expanded_terms = await _generate_expanded_keywords(raw_text)
+    search_terms = _query_terms(raw_text) + (expanded_terms or [])
 
-    # 1. Top-level subjects (K)
+    # --- Phase 1: top‑level subjects ---
     top_output = await fetch_gus_subjects.ainvoke({})
-    node_messages.append(
-        ToolMessage(content=top_output, tool_call_id="gus-subjects-top")
-    )
+    node_messages.append(ToolMessage(content=top_output, tool_call_id="gus-subjects-top"))
     top_subjects = _extract_items(top_output, "subjects", "items", "results", "data")
     if not top_subjects:
         node_errors.append("No top-level GUS subjects returned.")
@@ -54,6 +52,33 @@ async def _run_gus_resolution_agent(
         expanded_terms=expanded_terms,
     )
 
+    # Pre‑fetch children and compute child scores to break ties
+    k_with_scores = []
+    for k_subject in k_candidates:
+        k_id = _item_id(k_subject)
+        k_name = _item_name(k_subject)
+
+        # Fetch children once
+        children_output = await fetch_gus_subjects.ainvoke({"parent_id": k_id})
+        node_messages.append(ToolMessage(content=children_output, tool_call_id=f"gus-children-{k_id}"))
+        g_subjects = _extract_items(children_output, "subjects", "items", "results", "data")
+
+        # Lexical score for the K subject itself
+        k_score = _score_item(k_subject, search_terms)
+
+        # Best lexical score among its children
+        child_score = 0.0
+        if g_subjects:
+            child_score = max(_score_item(g, search_terms) for g in g_subjects)
+
+        k_with_scores.append((k_score, child_score, k_subject, g_subjects))
+
+    # Sort by (K score, child score) descending – breaks ties
+    k_with_scores.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    k_candidates = [entry[2] for entry in k_with_scores]
+    g_children_map = {_item_id(entry[2]): entry[3] for entry in k_with_scores}
+
+    # --- Phase 2: iterate over re‑ranked K candidates ---
     for k_index, k_subject in enumerate(k_candidates):
         k_id = _item_id(k_subject)
         k_name = _item_name(k_subject)
@@ -64,17 +89,7 @@ async def _run_gus_resolution_agent(
             "name": k_name,
         })
 
-        # 2. Fetch children of K (G-level)
-        children_output = await fetch_gus_subjects.ainvoke({"parent_id": k_id})
-        node_messages.append(
-            ToolMessage(
-                content=children_output,
-                tool_call_id=f"gus-children-{k_id}",
-            )
-        )
-        g_subjects = _extract_items(
-            children_output, "subjects", "items", "results", "data"
-        )
+        g_subjects = g_children_map[k_id]  # already fetched
         if not g_subjects:
             continue
 
@@ -98,15 +113,8 @@ async def _run_gus_resolution_agent(
 
             # 3. Fetch children of G (P-level)
             p_output = await fetch_gus_subjects.ainvoke({"parent_id": g_id})
-            node_messages.append(
-                ToolMessage(
-                    content=p_output,
-                    tool_call_id=f"gus-children-{g_id}",
-                )
-            )
-            p_subjects = _extract_items(
-                p_output, "subjects", "items", "results", "data"
-            )
+            node_messages.append(ToolMessage(content=p_output, tool_call_id=f"gus-children-{g_id}"))
+            p_subjects = _extract_items(p_output, "subjects", "items", "results", "data")
             if not p_subjects:
                 continue
 
@@ -128,7 +136,7 @@ async def _run_gus_resolution_agent(
                     "name": p_name,
                 })
 
-                # 4. Search variables under this P subject
+                # 4. Search variables under this P subject (unchanged)
                 variables_output = None
                 variables: List[Dict[str, Any]] = []
                 for term in expanded_terms:
@@ -146,16 +154,15 @@ async def _run_gus_resolution_agent(
                         break
 
                 if variables_output is not None:
-                    node_messages.append(
-                        ToolMessage(
-                            content=variables_output,
-                            tool_call_id=f"gus-variables-{p_id}",
-                        )
-                    )
+                    node_messages.append(ToolMessage(
+                        content=variables_output,
+                        tool_call_id=f"gus-variables-{p_id}",
+                    ))
+
                 if not variables:
                     continue
 
-                # 5. Select best variable and fetch data
+                # 5. Select best variable and fetch data (unchanged)
                 selected_variable = await _select_best_item(
                     variables,
                     raw_text,
@@ -183,12 +190,10 @@ async def _run_gus_resolution_agent(
                     "year_start": year_start,
                     "year_end": year_end,
                 })
-                node_messages.append(
-                    ToolMessage(
-                        content=data_output,
-                        tool_call_id=f"gus-data-{variable_id}",
-                    )
-                )
+                node_messages.append(ToolMessage(
+                    content=data_output,
+                    tool_call_id=f"gus-data-{variable_id}",
+                ))
 
                 parsed_data = _parse_json_payload(data_output)
                 if parsed_data is None:
