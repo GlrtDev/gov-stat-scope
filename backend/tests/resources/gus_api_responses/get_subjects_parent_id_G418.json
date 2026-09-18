@@ -1,0 +1,42 @@
+{
+  "totalRecords": 3,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G418&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G418&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G418&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P3869",
+      "parentId": "G418",
+      "name": "Wyniki finansowe (PKD 2007) - wskaźniki",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2695",
+      "parentId": "G418",
+      "name": "Wyniki finansowe wg sekcji PKD 2007",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2698",
+      "parentId": "G418",
+      "name": "Wyniki finansowe wg sektorów własności (PKD 2007)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

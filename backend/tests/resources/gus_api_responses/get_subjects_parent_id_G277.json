@@ -1,0 +1,52 @@
+{
+  "totalRecords": 4,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G277&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G277&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G277&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P3537",
+      "parentId": "G277",
+      "name": "Nakłady brutto na środki trwałe w gospodarce narodowej wg PKD 2007 - ESA 2010",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P3473",
+      "parentId": "G277",
+      "name": "Stopa inwestycji w gospodarce narodowej",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P3471",
+      "parentId": "G277",
+      "name": "Wartość brutto środków trwałych w gospodarce narodowej na 1 mieszkańca",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2855",
+      "parentId": "G277",
+      "name": "Wartość brutto środków trwałych w gospodarce narodowej wg sekcji PKD 2007",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

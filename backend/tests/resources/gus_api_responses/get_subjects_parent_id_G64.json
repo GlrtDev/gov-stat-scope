@@ -1,0 +1,42 @@
+{
+  "totalRecords": 3,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G64&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G64&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G64&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P2324",
+      "parentId": "G64",
+      "name": "Liczba mieszkańców na 1 sklep",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2323",
+      "parentId": "G64",
+      "name": "Sklepy i stacje paliw",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2774",
+      "parentId": "G64",
+      "name": "Sklepy wg form organizacyjnych",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        7
+      ]
+    }
+  ]
+}

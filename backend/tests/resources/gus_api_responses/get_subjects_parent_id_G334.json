@@ -1,0 +1,118 @@
+{
+  "totalRecords": 13,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G334&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G334&page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G334&page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G334&page=1&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P2159",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - gry zespołowe",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "P4038",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - gry zespołowe (dane opracowano wykorzystując estymację bezpośrednią z uwzględnieniem imputacji)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        4
+      ]
+    },
+    {
+      "id": "P2160",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - pozostałe",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "P4039",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - pozostałe (dane opracowano wykorzystując estymację bezpośrednią z uwzględnieniem imputacji)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        4
+      ]
+    },
+    {
+      "id": "P2158",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - sporty walki",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "P4037",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - sporty walki (dane opracowano wykorzystując estymację bezpośrednią z uwzględnieniem imputacji)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        4
+      ]
+    },
+    {
+      "id": "P2157",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - sporty wodne",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "P4030",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - sporty wodne (dane opracowano wykorzystując estymację bezpośrednią z uwzględnieniem imputacji)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        4
+      ]
+    },
+    {
+      "id": "P2156",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - sporty zimowe",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "P4029",
+      "parentId": "G334",
+      "name": "Ćwiczący w sekcjach sportowych wg sportów - sporty zimowe (dane opracowano wykorzystując estymację bezpośrednią z uwzględnieniem imputacji)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        4
+      ]
+    }
+  ]
+}

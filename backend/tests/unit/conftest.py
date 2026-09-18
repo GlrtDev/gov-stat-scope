@@ -53,7 +53,17 @@ def _fixture_for_request(request: httpx.Request) -> Any:
     params = request.url.params
 
     if path == "/subjects":
-        return _read_json("get_subjects.json")
+        parent_id = params.get("parent-id") or params.get("parentId")
+        if parent_id:
+            name = _first_existing(
+                [
+                    f"get_subjects_parent_id_{parent_id}.json",
+                    f"get_subjects_parent_id_{parent_id.lower()}.json",
+                    f"get_subjects_parent_id_{parent_id.upper()}.json",
+                ]
+            )
+            return _read_json(name)
+        return _read_json("get_subjects_page_0_page_size_100.json")
 
     # /subjects/{subject_id}
     match = re.fullmatch(r"/subjects/(?P<subject_id>[^/]+)", path)

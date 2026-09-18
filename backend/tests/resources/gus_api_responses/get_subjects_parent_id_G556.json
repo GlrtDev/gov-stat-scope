@@ -1,0 +1,54 @@
+{
+  "totalRecords": 4,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G556&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G556&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G556&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P3318",
+      "parentId": "G556",
+      "name": "Płatności narastająco dla Kampanii 2007-2023",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P3578",
+      "parentId": "G556",
+      "name": "Płatności w ramach jednej Kampanii",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P3577",
+      "parentId": "G556",
+      "name": "Powierzchnia/ilość objęta wnioskami o przyznanie płatności w ramach jednej Kampanii",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "P3576",
+      "parentId": "G556",
+      "name": "Wnioski o przyznanie płatności w ramach jednej Kampanii",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3,
+        5
+      ]
+    }
+  ]
+}

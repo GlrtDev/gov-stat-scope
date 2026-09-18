@@ -1,0 +1,238 @@
+{
+  "totalRecords": 8,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K27&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K27&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K27&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G569",
+      "parentId": "K27",
+      "name": "DANE ARCHIWALNE",
+      "hasVariables": false,
+      "children": [
+        "P1520",
+        "P1529",
+        "P1531",
+        "P1533",
+        "P1537",
+        "P1540",
+        "P1541",
+        "P1542",
+        "P1544",
+        "P1546",
+        "P1569",
+        "P1575",
+        "P1576",
+        "P1578",
+        "P1580",
+        "P1583",
+        "P1587",
+        "P1588",
+        "P1589",
+        "P1920",
+        "P1922",
+        "P2154",
+        "P2372",
+        "P2625",
+        "P2626",
+        "P2641",
+        "P2642",
+        "P2647",
+        "P2648",
+        "P2649",
+        "P2650",
+        "P2651",
+        "P2652",
+        "P2653",
+        "P3883",
+        "P3885"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "G423",
+      "parentId": "K27",
+      "name": "DOCHODY BUDŻETÓW GMIN I MIAST NA PRAWACH POWIATU",
+      "hasVariables": false,
+      "children": [
+        "P2621",
+        "P2622",
+        "P2623",
+        "P2624",
+        "P2627",
+        "P2632",
+        "P2816",
+        "P2913",
+        "P2915",
+        "P2919"
+      ],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "G195",
+      "parentId": "K27",
+      "name": "DOCHODY BUDŻETÓW POWIATÓW",
+      "hasVariables": false,
+      "children": [
+        "P1514",
+        "P1516",
+        "P1517",
+        "P1523",
+        "P2410",
+        "P2628",
+        "P2817",
+        "P2910",
+        "P2921"
+      ],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "G199",
+      "parentId": "K27",
+      "name": "DOCHODY BUDŻETÓW WOJEWÓDZTW",
+      "hasVariables": false,
+      "children": [
+        "P1565",
+        "P1566",
+        "P1567",
+        "P1570",
+        "P2412",
+        "P2654",
+        "P2818",
+        "P2911",
+        "P2923"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G497",
+      "parentId": "K27",
+      "name": "DOCHODY I WYDATKI BUDŻETÓW JST - WSKAŹNIKI",
+      "hasVariables": false,
+      "children": [
+        "P3174",
+        "P3175",
+        "P3176",
+        "P3305",
+        "P3314",
+        "P3315",
+        "P3316",
+        "P3808",
+        "P3809",
+        "P3810",
+        "P3811",
+        "P3960"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "G425",
+      "parentId": "K27",
+      "name": "WYDATKI BUDŻETÓW GMIN I MIAST NA PRAWACH POWIATU",
+      "hasVariables": false,
+      "children": [
+        "P2633",
+        "P2634",
+        "P2635",
+        "P2636",
+        "P2637",
+        "P2638",
+        "P2639",
+        "P2640",
+        "P2643",
+        "P2644",
+        "P2665",
+        "P2666",
+        "P2819",
+        "P2920",
+        "P3021",
+        "P3228",
+        "P3289",
+        "P3568",
+        "P3758"
+      ],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "G197",
+      "parentId": "K27",
+      "name": "WYDATKI BUDŻETÓW POWIATÓW",
+      "hasVariables": false,
+      "children": [
+        "P1528",
+        "P1530",
+        "P1532",
+        "P1534",
+        "P1535",
+        "P1538",
+        "P1539",
+        "P1543",
+        "P1545",
+        "P1547",
+        "P2414",
+        "P2820",
+        "P2922",
+        "P3013",
+        "P3288",
+        "P3290",
+        "P3291",
+        "P3292",
+        "P3293",
+        "P3294",
+        "P3759"
+      ],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "G201",
+      "parentId": "K27",
+      "name": "WYDATKI BUDŻETÓW WOJEWÓDZTW",
+      "hasVariables": false,
+      "children": [
+        "P1571",
+        "P1572",
+        "P1573",
+        "P1574",
+        "P1577",
+        "P1579",
+        "P1581",
+        "P1582",
+        "P1584",
+        "P1586",
+        "P1590",
+        "P2416",
+        "P2722",
+        "P2821",
+        "P2924",
+        "P3022",
+        "P3307",
+        "P3308"
+      ],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

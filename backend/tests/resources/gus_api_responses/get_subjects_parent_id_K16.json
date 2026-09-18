@@ -1,0 +1,99 @@
+{
+  "totalRecords": 6,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K16&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K16&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K16&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G566",
+      "parentId": "K16",
+      "name": "DANE ARCHIWALNE",
+      "hasVariables": false,
+      "children": [
+        "P1475",
+        "P1626",
+        "P1628",
+        "P1631",
+        "P1923"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "G190",
+      "parentId": "K16",
+      "name": "PLACÓWKI GASTRONOMICZNE",
+      "hasVariables": false,
+      "children": [
+        "P1476",
+        "P2505"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G64",
+      "parentId": "K16",
+      "name": "SKLEPY I STACJE PALIW",
+      "hasVariables": false,
+      "children": [
+        "P2323",
+        "P2324",
+        "P2774"
+      ],
+      "levels": [
+        3,
+        7
+      ]
+    },
+    {
+      "id": "G67",
+      "parentId": "K16",
+      "name": "SPRZEDAŻ DETALICZNA",
+      "hasVariables": false,
+      "children": [
+        "P1633",
+        "P2329",
+        "P3860",
+        "P3861"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G66",
+      "parentId": "K16",
+      "name": "SPRZEDAŻ HURTOWA",
+      "hasVariables": false,
+      "children": [
+        "P2841",
+        "P2859",
+        "P3433"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G65",
+      "parentId": "K16",
+      "name": "TARGOWISKA",
+      "hasVariables": false,
+      "children": [
+        "P1629",
+        "P1630"
+      ],
+      "levels": [
+        6
+      ]
+    }
+  ]
+}

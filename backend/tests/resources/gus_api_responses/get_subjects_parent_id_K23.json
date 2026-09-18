@@ -1,0 +1,148 @@
+{
+  "totalRecords": 8,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K23&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K23&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K23&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G226",
+      "parentId": "K23",
+      "name": "BIBLIOTEKI",
+      "hasVariables": false,
+      "children": [
+        "P1688",
+        "P1691",
+        "P2381",
+        "P2764",
+        "P2773",
+        "P2807",
+        "P2808"
+      ],
+      "levels": [
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "G653",
+      "parentId": "K23",
+      "name": "DANE DOTYCZĄCE SEKTORA PUBLICZNEGO",
+      "hasVariables": false,
+      "children": [
+        "P4344",
+        "P4418"
+      ],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "G370",
+      "parentId": "K23",
+      "name": "DZIAŁALNOŚĆ CENTRÓW, DOMÓW, OŚRODKÓW KULTURY, KLUBÓW I ŚWIETLIC",
+      "hasVariables": false,
+      "children": [
+        "P2284",
+        "P2792",
+        "P2793",
+        "P2794",
+        "P2795",
+        "P3221",
+        "P3222",
+        "P3223",
+        "P3760",
+        "P3904"
+      ],
+      "levels": [
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "G229",
+      "parentId": "K23",
+      "name": "DZIAŁALNOŚĆ SCENICZNA I WYSTAWIENNICZA",
+      "hasVariables": false,
+      "children": [
+        "P1680",
+        "P1682",
+        "P2153",
+        "P2382",
+        "P2874",
+        "P2875"
+      ],
+      "levels": [
+        3,
+        5,
+        7
+      ]
+    },
+    {
+      "id": "G227",
+      "parentId": "K23",
+      "name": "KINA",
+      "hasVariables": false,
+      "children": [
+        "P1687",
+        "P2364",
+        "P2393"
+      ],
+      "levels": [
+        3,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "G228",
+      "parentId": "K23",
+      "name": "MUZEA",
+      "hasVariables": false,
+      "children": [
+        "P1679",
+        "P1683",
+        "P1684",
+        "P3579",
+        "P3580"
+      ],
+      "levels": [
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "G533",
+      "parentId": "K23",
+      "name": "ORGANIZACJA IMPREZ MASOWYCH",
+      "hasVariables": false,
+      "children": [
+        "P3400",
+        "P3402",
+        "P3403"
+      ],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "G617",
+      "parentId": "K23",
+      "name": "WYDAWNICTWA",
+      "hasVariables": false,
+      "children": [
+        "P3949"
+      ],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

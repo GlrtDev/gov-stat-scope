@@ -1,0 +1,84 @@
+{
+  "totalRecords": 7,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G226&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G226&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G226&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P2773",
+      "parentId": "G226",
+      "name": "Biblioteki inne niż publiczne",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        7
+      ]
+    },
+    {
+      "id": "P1688",
+      "parentId": "G226",
+      "name": "Biblioteki publiczne",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6,
+        7
+      ]
+    },
+    {
+      "id": "P2381",
+      "parentId": "G226",
+      "name": "Biblioteki publiczne - wskaźniki",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P1691",
+      "parentId": "G226",
+      "name": "Biblioteki publiczne wg organu prowadzącego",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5,
+        6
+      ]
+    },
+    {
+      "id": "P2764",
+      "parentId": "G226",
+      "name": "Komputeryzacja bibliotek",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        7
+      ]
+    },
+    {
+      "id": "P2807",
+      "parentId": "G226",
+      "name": "Udostępnianie zbiorów czytelnikom w bibliotekach innych niż publiczne",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        7
+      ]
+    },
+    {
+      "id": "P2808",
+      "parentId": "G226",
+      "name": "Wypożyczenia międzybiblioteczne w bibliotekach innych niż publiczne",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        7
+      ]
+    }
+  ]
+}

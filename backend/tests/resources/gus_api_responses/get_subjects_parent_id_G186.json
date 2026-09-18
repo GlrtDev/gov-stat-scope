@@ -1,0 +1,102 @@
+{
+  "totalRecords": 9,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G186&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G186&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G186&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P3415",
+      "parentId": "G186",
+      "name": "Cena zakupu/sprzedaży użytków rolnych za 1 ha w obrocie prywatnym",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P3183",
+      "parentId": "G186",
+      "name": "Cena zakupu/sprzedaży użytków rolnych za 1 ha w obrocie prywatnym (dane kwartalne / półroczne)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P1460",
+      "parentId": "G186",
+      "name": "Przeciętne ceny gruntów ornych (za 1ha) w obrocie prywatnym",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P3156",
+      "parentId": "G186",
+      "name": "Przeciętne ceny owoców i warzyw uzyskiwane przez rolników na targowiskach (dane półroczne)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P3155",
+      "parentId": "G186",
+      "name": "Przeciętne ceny skupu owoców i warzyw (dane półroczne)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P1458",
+      "parentId": "G186",
+      "name": "Przeciętne ceny skupu produktów rolnych",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2967",
+      "parentId": "G186",
+      "name": "Przeciętne ceny skupu ważniejszych produktów rolnych (dane miesięczne)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P1459",
+      "parentId": "G186",
+      "name": "Przeciętne ceny uzyskiwane przez rolników na targowiskach",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2968",
+      "parentId": "G186",
+      "name": "Przeciętne ceny uzyskiwane przez rolników na targowiskach (dane miesięczne)",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

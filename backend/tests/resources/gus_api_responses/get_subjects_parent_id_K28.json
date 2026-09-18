@@ -1,0 +1,94 @@
+{
+  "totalRecords": 5,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K28&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K28&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K28&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G567",
+      "parentId": "K28",
+      "name": "DANE ARCHIWALNE",
+      "hasVariables": false,
+      "children": [
+        "P1855",
+        "P1856",
+        "P1857",
+        "P2477",
+        "P2482",
+        "P2527",
+        "P2528",
+        "P2555",
+        "P2556",
+        "P2557",
+        "P2572",
+        "P2926"
+      ],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "G278",
+      "parentId": "K28",
+      "name": "NAKŁADY INWESTYCYJNE",
+      "hasVariables": false,
+      "children": [
+        "P1858",
+        "P2417",
+        "P2733",
+        "P2734",
+        "P2854",
+        "P3450"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G438",
+      "parentId": "K28",
+      "name": "NAKŁADY INWESTYCYJNE I ŚRODKI TRWAŁE W PRZEDSIĘBIORSTWACH WG PKD 2007",
+      "hasVariables": false,
+      "children": [
+        "P2755",
+        "P2862"
+      ],
+      "levels": [
+        4,
+        5
+      ]
+    },
+    {
+      "id": "G277",
+      "parentId": "K28",
+      "name": "RZECZOWY MAJĄTEK TRWAŁY",
+      "hasVariables": false,
+      "children": [
+        "P2855",
+        "P3471",
+        "P3473",
+        "P3537"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G539",
+      "parentId": "K28",
+      "name": "ŹRÓDŁA FINANSOWANIA NAKŁADÓW INWESTYCYJNYCH W PRZEDSIĘBIORSTWACH",
+      "hasVariables": false,
+      "children": [
+        "P3445"
+      ],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "totalRecords": 2,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K24&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K24&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K24&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G334",
+      "parentId": "K24",
+      "name": "SPORT",
+      "hasVariables": false,
+      "children": [
+        "P2155",
+        "P2156",
+        "P2157",
+        "P2158",
+        "P2159",
+        "P2160",
+        "P3881",
+        "P4028",
+        "P4029",
+        "P4030",
+        "P4037",
+        "P4038",
+        "P4039"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "G662",
+      "parentId": "K24",
+      "name": "USŁUGI PUBLICZNE",
+      "hasVariables": false,
+      "children": [
+        "P4429",
+        "P4430"
+      ],
+      "levels": [
+        6
+      ]
+    }
+  ]
+}

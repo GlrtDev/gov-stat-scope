@@ -1,0 +1,39 @@
+{
+  "totalRecords": 2,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K43&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K43&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K43&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G576",
+      "parentId": "K43",
+      "name": "DANE ARCHIWALNE",
+      "hasVariables": false,
+      "children": [
+        "P2561",
+        "P2562"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G418",
+      "parentId": "K43",
+      "name": "WYNIKI FINANSOWE PRZEDSIĘBIORSTW",
+      "hasVariables": false,
+      "children": [
+        "P2695",
+        "P2698",
+        "P3869"
+      ],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "totalRecords": 9,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G195&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G195&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G195&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P1514",
+      "parentId": "G195",
+      "name": "Dochody budżetów powiatów",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P2628",
+      "parentId": "G195",
+      "name": "Dochody majątkowe powiatów",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P2410",
+      "parentId": "G195",
+      "name": "Dochody na 1 mieszkańca",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P2921",
+      "parentId": "G195",
+      "name": "Dochody ogółem wg działów Klasyfikacji Budżetowej",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P2817",
+      "parentId": "G195",
+      "name": "Dochody uzyskane w rozdziałach ***78 - Usuwanie skutków klęsk żywiołowych w wybranych działach",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P1523",
+      "parentId": "G195",
+      "name": "Dochody własne budżetów powiatów",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P1517",
+      "parentId": "G195",
+      "name": "Dotacje",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P2910",
+      "parentId": "G195",
+      "name": "Finansowanie i współfinansowanie programów i projektów unijnych",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P1516",
+      "parentId": "G195",
+      "name": "Subwencja ogólna",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    }
+  ]
+}

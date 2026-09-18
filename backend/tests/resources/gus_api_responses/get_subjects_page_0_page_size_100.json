@@ -1,0 +1,689 @@
+{
+  "totalRecords": 33,
+  "page": 0,
+  "pageSize": 100,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?page=0&page-size=100",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?page=0&page-size=100",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?page=0&page-size=100"
+  },
+  "results": [
+    {
+      "id": "K15",
+      "name": "CENY",
+      "hasVariables": false,
+      "children": [
+        "G186",
+        "G187",
+        "G188",
+        "G189",
+        "G405"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "K43",
+      "name": "FINANSE PRZEDSIĘBIORSTW (DANE KWARTALNE)",
+      "hasVariables": false,
+      "children": [
+        "G418",
+        "G576"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "K27",
+      "name": "FINANSE PUBLICZNE",
+      "hasVariables": false,
+      "children": [
+        "G195",
+        "G197",
+        "G199",
+        "G201",
+        "G423",
+        "G425",
+        "G497",
+        "G569"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K47",
+      "name": "FUNDUSZE UNIJNE (DANE PÓŁROCZNE)",
+      "hasVariables": false,
+      "children": [
+        "G556",
+        "G580",
+        "G586",
+        "G587",
+        "G588",
+        "G589",
+        "G590",
+        "G608",
+        "G624",
+        "G663",
+        "G665",
+        "G667"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K11",
+      "name": "GOSPODARKA MIESZKANIOWA I KOMUNALNA",
+      "hasVariables": false,
+      "children": [
+        "G57",
+        "G59",
+        "G231",
+        "G233",
+        "G236",
+        "G335",
+        "G402",
+        "G562",
+        "G619",
+        "G621",
+        "G630"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K44",
+      "name": "GOSPODARKA SPOŁECZNA",
+      "hasVariables": false,
+      "children": [
+        "G446",
+        "G568",
+        "G629"
+      ],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "K16",
+      "name": "HANDEL I GASTRONOMIA",
+      "hasVariables": false,
+      "children": [
+        "G64",
+        "G65",
+        "G66",
+        "G67",
+        "G190",
+        "G566"
+      ],
+      "levels": [
+        3,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K28",
+      "name": "INWESTYCJE I ŚRODKI TRWAŁE",
+      "hasVariables": false,
+      "children": [
+        "G277",
+        "G278",
+        "G438",
+        "G539",
+        "G567"
+      ],
+      "levels": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": "K23",
+      "name": "KULTURA ",
+      "hasVariables": false,
+      "children": [
+        "G226",
+        "G227",
+        "G228",
+        "G229",
+        "G370",
+        "G533",
+        "G617",
+        "G653"
+      ],
+      "levels": [
+        3,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K24",
+      "name": "KULTURA FIZYCZNA, SPORT I REKREACJA",
+      "hasVariables": false,
+      "children": [
+        "G334",
+        "G662"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K54",
+      "name": "LEŚNICTWO I ŁOWIECTWO",
+      "hasVariables": false,
+      "children": [
+        "G171",
+        "G183",
+        "G191",
+        "G443",
+        "G444",
+        "G582",
+        "G610"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "K3",
+      "name": "LUDNOŚĆ",
+      "hasVariables": false,
+      "children": [
+        "G7",
+        "G8",
+        "G10",
+        "G534",
+        "G535",
+        "G564",
+        "G655"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K31",
+      "name": "NARODOWE SPISY POWSZECHNE",
+      "hasVariables": false,
+      "children": [
+        "G299",
+        "G301",
+        "G332",
+        "G341",
+        "G345",
+        "G346",
+        "G450",
+        "G451",
+        "G453",
+        "G503",
+        "G518",
+        "G524",
+        "G531",
+        "G536",
+        "G591",
+        "G640",
+        "G644",
+        "G645",
+        "G651",
+        "G652"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K10",
+      "name": "NAUKA I TECHNIKA. SPOŁECZEŃSTWO INFORMACYJNE",
+      "hasVariables": false,
+      "children": [
+        "G184",
+        "G432",
+        "G433",
+        "G483",
+        "G508",
+        "G572"
+      ],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "K22",
+      "name": "OCHRONA ZDROWIA, OPIEKA SPOŁECZNA I ŚWIADCZENIA NA RZECZ RODZINY",
+      "hasVariables": false,
+      "children": [
+        "G260",
+        "G261",
+        "G262",
+        "G263",
+        "G264",
+        "G265",
+        "G266",
+        "G267",
+        "G268",
+        "G399",
+        "G429",
+        "G477",
+        "G553",
+        "G561",
+        "G598",
+        "G658",
+        "G659",
+        "G660",
+        "G661"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K37",
+      "name": "ORGANIZACJA PAŃSTWA I WYMIAR SPRAWIEDLIWOŚCI",
+      "hasVariables": false,
+      "children": [
+        "G371",
+        "G502",
+        "G581",
+        "G605",
+        "G606",
+        "G607"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K25",
+      "name": "PODMIOTY GOSPODARKI NARODOWEJ, PRZEKSZTAŁCENIA WŁASNOŚCIOWE I STRUKTURALNE",
+      "hasVariables": false,
+      "children": [
+        "G203",
+        "G307",
+        "G309",
+        "G373",
+        "G377",
+        "G437",
+        "G439",
+        "G454",
+        "G565"
+      ],
+      "levels": [
+        3,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K1",
+      "name": "PODZIAŁ TERYTORIALNY",
+      "hasVariables": false,
+      "children": [
+        "G172",
+        "G441"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K34",
+      "name": "POWSZECHNE SPISY ROLNE",
+      "hasVariables": false,
+      "children": [
+        "G281",
+        "G285",
+        "G290",
+        "G298",
+        "G320",
+        "G321",
+        "G476",
+        "G484",
+        "G636",
+        "G637"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K12",
+      "name": "PRZEMYSŁ I BUDOWNICTWO",
+      "hasVariables": false,
+      "children": [
+        "G225",
+        "G379",
+        "G573",
+        "G602",
+        "G603",
+        "G604",
+        "G643",
+        "G656"
+      ],
+      "levels": [
+        3,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K29",
+      "name": "RACHUNKI REGIONALNE",
+      "hasVariables": false,
+      "children": [
+        "G541",
+        "G542",
+        "G543",
+        "G544",
+        "G545",
+        "G546",
+        "G547",
+        "G548",
+        "G549",
+        "G550",
+        "G551",
+        "G563"
+      ],
+      "levels": [
+        3,
+        4
+      ]
+    },
+    {
+      "id": "K6",
+      "name": "ROLNICTWO",
+      "hasVariables": false,
+      "children": [
+        "G180",
+        "G181",
+        "G182",
+        "G333",
+        "G375",
+        "G390",
+        "G422",
+        "G578",
+        "G669"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "K13",
+      "name": "RYNEK MATERIAŁOWY I PALIWOWO-ENERGETYCZNY",
+      "hasVariables": false,
+      "children": [
+        "G185",
+        "G574"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "K48",
+      "name": "RYNEK NIERUCHOMOŚCI",
+      "hasVariables": false,
+      "children": [
+        "G596",
+        "G597"
+      ],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "K4",
+      "name": "RYNEK PRACY",
+      "hasVariables": false,
+      "children": [
+        "G12",
+        "G13",
+        "G479",
+        "G481",
+        "G538",
+        "G570",
+        "G623",
+        "G635",
+        "G638"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K2",
+      "name": "SAMORZĄD TERYTORIALNY",
+      "hasVariables": false,
+      "children": [
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G170",
+        "G421",
+        "G499",
+        "G560",
+        "G639",
+        "G654"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K9",
+      "name": "STAN I OCHRONA ŚRODOWISKA",
+      "hasVariables": false,
+      "children": [
+        "G215",
+        "G216",
+        "G217",
+        "G218",
+        "G219",
+        "G220",
+        "G222",
+        "G223",
+        "G274",
+        "G276",
+        "G304",
+        "G305",
+        "G311",
+        "G365",
+        "G387",
+        "G575",
+        "G614",
+        "G615",
+        "G650",
+        "G664",
+        "G673"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K20",
+      "name": "SZKOLNICTWO",
+      "hasVariables": false,
+      "children": [
+        "G252",
+        "G253",
+        "G256",
+        "G257",
+        "G258",
+        "G259",
+        "G313",
+        "G314",
+        "G316",
+        "G367",
+        "G393",
+        "G500",
+        "G571",
+        "G595",
+        "G620",
+        "G622",
+        "G670"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K21",
+      "name": "SZKOLNICTWO WYŻSZE",
+      "hasVariables": false,
+      "children": [
+        "G269",
+        "G273",
+        "G279",
+        "G391",
+        "G613",
+        "G616",
+        "G627",
+        "G628"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K8",
+      "name": "TRANSPORT I ŁĄCZNOŚĆ",
+      "hasVariables": false,
+      "children": [
+        "G208",
+        "G209",
+        "G213",
+        "G239",
+        "G245",
+        "G246",
+        "G247",
+        "G249",
+        "G250",
+        "G372",
+        "G558",
+        "G577",
+        "G592",
+        "G593",
+        "G594"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "K18",
+      "name": "TURYSTYKA",
+      "hasVariables": false,
+      "children": [
+        "G240",
+        "G383",
+        "G478",
+        "G559",
+        "G649",
+        "G668"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K19",
+      "name": "WYCHOWANIE PRZEDSZKOLNE",
+      "hasVariables": false,
+      "children": [
+        "G251",
+        "G430",
+        "G431",
+        "G498"
+      ],
+      "levels": [
+        6,
+        7
+      ]
+    },
+    {
+      "id": "K40",
+      "name": "WYNAGRODZENIA I ŚWIADCZENIA SPOŁECZNE",
+      "hasVariables": false,
+      "children": [
+        "G403",
+        "G404",
+        "G579"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    }
+  ]
+}

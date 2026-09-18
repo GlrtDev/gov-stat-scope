@@ -1,0 +1,220 @@
+{
+  "totalRecords": 11,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K11&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K11&page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K11&page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K11&page=1&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G59",
+      "parentId": "K11",
+      "name": "CIEPŁOWNICTWO",
+      "hasVariables": false,
+      "children": [
+        "P3541",
+        "P3542",
+        "P3544",
+        "P3770",
+        "P4064"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "G562",
+      "parentId": "K11",
+      "name": "DANE ARCHIWALNE",
+      "hasVariables": false,
+      "children": [
+        "P1602",
+        "P1603",
+        "P1606",
+        "P1717",
+        "P1721",
+        "P1739",
+        "P1740",
+        "P1741",
+        "P1742",
+        "P1918",
+        "P1972",
+        "P1977",
+        "P3529",
+        "P3543",
+        "P3545"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "G335",
+      "parentId": "K11",
+      "name": "DODATKI MIESZKANIOWE",
+      "hasVariables": false,
+      "children": [
+        "P2173"
+      ],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "G619",
+      "parentId": "K11",
+      "name": "GOSPODARKA GRUNTAMI POD BUDOWNICTWO MIESZKANIOWE",
+      "hasVariables": false,
+      "children": [
+        "P3953",
+        "P3954"
+      ],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "G621",
+      "parentId": "K11",
+      "name": "KOSZTY UTRZYMANIA ZASOBÓW",
+      "hasVariables": false,
+      "children": [
+        "P3958",
+        "P3961",
+        "P3964"
+      ],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "G236",
+      "parentId": "K11",
+      "name": "REMONTY KOMUNALNYCH ZASOBÓW MIESZKANIOWYCH",
+      "hasVariables": false,
+      "children": [
+        "P1975",
+        "P3614"
+      ],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "G402",
+      "parentId": "K11",
+      "name": "REMONTY ZASOBÓW MIESZKANIOWYCH WEDŁUG FORM WŁASNOŚCI",
+      "hasVariables": false,
+      "children": [
+        "P2468",
+        "P2469"
+      ],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "G233",
+      "parentId": "K11",
+      "name": "UBYTKI W ZASOBACH MIESZKANIOWYCH",
+      "hasVariables": false,
+      "children": [
+        "P1737",
+        "P2352",
+        "P2353",
+        "P2354"
+      ],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "G57",
+      "parentId": "K11",
+      "name": "URZĄDZENIA SIECIOWE",
+      "hasVariables": false,
+      "children": [
+        "P1600",
+        "P1601",
+        "P1604",
+        "P1880",
+        "P2433",
+        "P2441",
+        "P2442",
+        "P2474",
+        "P2489",
+        "P2876",
+        "P2877",
+        "P3458",
+        "P3459",
+        "P3585",
+        "P4421",
+        "P4565"
+      ],
+      "levels": [
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "G630",
+      "parentId": "K11",
+      "name": "ZALEGŁOŚCI W OPŁATACH ZA MIESZKANIA I POSTĘPOWANIA EKSMISYJNE",
+      "hasVariables": false,
+      "children": [
+        "P1731",
+        "P1734",
+        "P2466",
+        "P2467",
+        "P4263"
+      ],
+      "levels": [
+        5,
+        6
+      ]
+    },
+    {
+      "id": "G231",
+      "parentId": "K11",
+      "name": "ZASOBY MIESZKANIOWE",
+      "hasVariables": false,
+      "children": [
+        "P1719",
+        "P1727",
+        "P1728",
+        "P1732",
+        "P2166",
+        "P2430",
+        "P2431",
+        "P2762",
+        "P2908",
+        "P2909",
+        "P3950",
+        "P3952",
+        "P3966",
+        "P4050",
+        "P4088",
+        "P4264",
+        "P4265",
+        "P4267",
+        "P4268",
+        "P4269",
+        "P4564"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    }
+  ]
+}

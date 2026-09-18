@@ -1,0 +1,65 @@
+{
+  "totalRecords": 3,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K44&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K44&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K44&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G568",
+      "parentId": "K44",
+      "name": "DANE ARCHIWALNE",
+      "hasVariables": false,
+      "children": [
+        "P2846",
+        "P2849"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G629",
+      "parentId": "K44",
+      "name": "REINTEGRACJA SPOŁECZNO-ZAWODOWA",
+      "hasVariables": false,
+      "children": [
+        "P4052",
+        "P4054",
+        "P4055",
+        "P4056",
+        "P4057",
+        "P4436",
+        "P4499"
+      ],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "G446",
+      "parentId": "K44",
+      "name": "SEKTOR NON-PROFIT",
+      "hasVariables": false,
+      "children": [
+        "P2827",
+        "P2828",
+        "P2829",
+        "P2842",
+        "P2843",
+        "P2844",
+        "P2845",
+        "P2848",
+        "P3527",
+        "P3528"
+      ],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

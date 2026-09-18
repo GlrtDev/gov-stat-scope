@@ -1,0 +1,113 @@
+{
+  "totalRecords": 16,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G57&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G57&page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G57&page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G57&page=1&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P3585",
+      "parentId": "G57",
+      "name": "Budynki mieszkalne podłączone do infrastruktury technicznej - w % ogółu budynków mieszkalnych",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P3459",
+      "parentId": "G57",
+      "name": "Długość sieci kanalizacyjnej w relacji do długości sieci wodociągowej",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P1604",
+      "parentId": "G57",
+      "name": "Energia elektryczna w gospodarstwach domowych w miastach",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P1880",
+      "parentId": "G57",
+      "name": "Energia elektryczna w gospodarstwach domowych wg lokalizacji odbiorcy",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "P1601",
+      "parentId": "G57",
+      "name": "Kanalizacja",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P2433",
+      "parentId": "G57",
+      "name": "Korzystający z instalacji w % ogółu ludności",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P4565",
+      "parentId": "G57",
+      "name": "Ludność korzystająca z sieci gazowej",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P2877",
+      "parentId": "G57",
+      "name": "Przedsiębiorstwa świadczące usługi w gminie w badanym roku",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P3458",
+      "parentId": "G57",
+      "name": "Różnica pomiędzy odsetkiem ludności korzystającej z wodociągu i z kanalizacji wg lokalizacji",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    },
+    {
+      "id": "P4421",
+      "parentId": "G57",
+      "name": "Sieć gazowa",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        6
+      ]
+    }
+  ]
+}

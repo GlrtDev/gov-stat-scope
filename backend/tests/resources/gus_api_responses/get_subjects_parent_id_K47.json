@@ -1,0 +1,386 @@
+{
+  "totalRecords": 12,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K47&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K47&page=0&page-size=10",
+    "next": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K47&page=1&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K47&page=1&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G608",
+      "parentId": "K47",
+      "name": "DANE ARCHIWALNE",
+      "hasVariables": false,
+      "children": [
+        "P3111",
+        "P3112",
+        "P3113",
+        "P3114",
+        "P3115",
+        "P3116",
+        "P3117",
+        "P3118",
+        "P3119",
+        "P3120",
+        "P3121",
+        "P3122",
+        "P3123",
+        "P3124",
+        "P3125",
+        "P3126",
+        "P3127",
+        "P3128",
+        "P3129",
+        "P3130",
+        "P3131",
+        "P3132",
+        "P3133",
+        "P3134",
+        "P3135",
+        "P3136",
+        "P3137",
+        "P3138",
+        "P3139",
+        "P3140",
+        "P3141",
+        "P3142",
+        "P3143",
+        "P3144",
+        "P3145",
+        "P3146",
+        "P3147",
+        "P3148",
+        "P3149",
+        "P3150",
+        "P3151",
+        "P3152",
+        "P3153",
+        "P3154",
+        "P3215",
+        "P3276",
+        "P3320",
+        "P3341",
+        "P3376",
+        "P3377",
+        "P3378",
+        "P3379",
+        "P3380",
+        "P3381",
+        "P3382",
+        "P3383",
+        "P3384",
+        "P3385",
+        "P3386",
+        "P3387",
+        "P3388",
+        "P3389",
+        "P3390",
+        "P3391",
+        "P3392",
+        "P3393",
+        "P3394",
+        "P3395",
+        "P3396",
+        "P3397"
+      ],
+      "levels": [
+        3,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "G624",
+      "parentId": "K47",
+      "name": "FUNDUSZE UNIJNE - 2014-2020 - WSKAŹNIKI",
+      "hasVariables": false,
+      "children": [
+        "P3994"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G663",
+      "parentId": "K47",
+      "name": "FUNDUSZE UNIJNE - PLAN STRATEGICZNY DLA WSPÓLNEJ POLITYKI ROLNEJ 2023–2027",
+      "hasVariables": false,
+      "children": [
+        "P4591",
+        "P4592",
+        "P4593",
+        "P4594",
+        "P4595",
+        "P4596",
+        "P4597",
+        "P4598",
+        "P4599",
+        "P4600"
+      ],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "G580",
+      "parentId": "K47",
+      "name": "FUNDUSZE UNIJNE - PROW 2014-2020",
+      "hasVariables": false,
+      "children": [
+        "P3877",
+        "P3878",
+        "P3879",
+        "P3880"
+      ],
+      "levels": [
+        5
+      ]
+    },
+    {
+      "id": "G556",
+      "parentId": "K47",
+      "name": "FUNDUSZE UNIJNE - SYSTEMY WSPARCIA BEZPOŚREDNIEGO",
+      "hasVariables": false,
+      "children": [
+        "P3318",
+        "P3576",
+        "P3577",
+        "P3578"
+      ],
+      "levels": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": "G667",
+      "parentId": "K47",
+      "name": "UMOWA PARTNERSTWA DLA REALIZACJI POLITYKI SPÓJNOŚCI NA LATA 2021-2027 W POLSCE - WARTOŚĆ UMÓW/DECYZJI O DOFINANSOWANIE I WARTOŚĆ WNIOSKÓW O PŁATNOŚĆ DO CERTYFIKACJI",
+      "hasVariables": false,
+      "children": [
+        "P4566",
+        "P4567",
+        "P4568",
+        "P4569",
+        "P4570",
+        "P4571",
+        "P4572",
+        "P4573",
+        "P4574",
+        "P4575",
+        "P4576",
+        "P4577",
+        "P4578",
+        "P4579",
+        "P4580",
+        "P4581",
+        "P4582",
+        "P4583",
+        "P4584",
+        "P4585",
+        "P4586",
+        "P4587",
+        "P4588",
+        "P4589"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "G665",
+      "parentId": "K47",
+      "name": "UMOWA PARTNERSTWA DLA REALIZACJI POLITYKI SPÓJNOŚCI NA LATA 2021-2027 W POLSCE - WNIOSKI O DOFINANSOWANIE, UMOWY/DECYZJE O DOFINANSOWANIE, WNIOSKI O PŁATNOŚĆ DO CERTYFIKACJI",
+      "hasVariables": false,
+      "children": [
+        "P4514",
+        "P4515",
+        "P4516",
+        "P4517",
+        "P4518",
+        "P4519",
+        "P4520",
+        "P4521",
+        "P4522",
+        "P4523",
+        "P4524",
+        "P4525",
+        "P4526",
+        "P4527",
+        "P4528",
+        "P4529",
+        "P4530",
+        "P4531",
+        "P4532",
+        "P4533",
+        "P4534",
+        "P4535",
+        "P4536",
+        "P4537"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "G587",
+      "parentId": "K47",
+      "name": "UMOWY PARTNERSTWA - UMOWY / DECYZJE O DOFINANSOWANIE - 2014-2020",
+      "hasVariables": false,
+      "children": [
+        "P3638",
+        "P3639",
+        "P3640",
+        "P3641",
+        "P3642",
+        "P3643",
+        "P3644",
+        "P3645",
+        "P3646",
+        "P3647",
+        "P3648",
+        "P3649",
+        "P3650",
+        "P3651",
+        "P3652",
+        "P3653",
+        "P3654",
+        "P3655",
+        "P3656",
+        "P3657",
+        "P3658",
+        "P3659",
+        "P3689"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "G589",
+      "parentId": "K47",
+      "name": "UMOWY PARTNERSTWA - WARTOŚĆ PROJEKTÓW ZAKOŃCZONYCH (WYDATKI KWALIFIKOWALNE) - 2014-2020",
+      "hasVariables": false,
+      "children": [
+        "P3707",
+        "P3708",
+        "P3709",
+        "P3710",
+        "P3711",
+        "P3712",
+        "P3713",
+        "P3714",
+        "P3715",
+        "P3716",
+        "P3717",
+        "P3718",
+        "P3719",
+        "P3720",
+        "P3721",
+        "P3722",
+        "P3723",
+        "P3724",
+        "P3725",
+        "P3726",
+        "P3727",
+        "P3728",
+        "P3729"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "G588",
+      "parentId": "K47",
+      "name": "UMOWY PARTNERSTWA - WARTOŚĆ UMÓW / DECYZJI O DOFINANSOWANIE - 2014-2020",
+      "hasVariables": false,
+      "children": [
+        "P3682",
+        "P3683",
+        "P3684",
+        "P3685",
+        "P3686",
+        "P3687",
+        "P3690",
+        "P3691",
+        "P3692",
+        "P3693",
+        "P3694",
+        "P3695",
+        "P3696",
+        "P3697",
+        "P3698",
+        "P3699",
+        "P3700",
+        "P3701",
+        "P3702",
+        "P3703",
+        "P3704",
+        "P3705",
+        "P3706"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "G586",
+      "parentId": "K47",
+      "name": "UMOWY PARTNERSTWA - WNIOSKI O DOFINANSOWANIE - 2014-2020",
+      "hasVariables": false,
+      "children": [
+        "P3660",
+        "P3661",
+        "P3662",
+        "P3663",
+        "P3664",
+        "P3665",
+        "P3666",
+        "P3667",
+        "P3668",
+        "P3669",
+        "P3670",
+        "P3671",
+        "P3672",
+        "P3673",
+        "P3674",
+        "P3675",
+        "P3676",
+        "P3677",
+        "P3678",
+        "P3679",
+        "P3680",
+        "P3681",
+        "P3688"
+      ],
+      "levels": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "G590",
+      "parentId": "K47",
+      "name": "WPRYB - PO RYBY 2014-2020",
+      "hasVariables": false,
+      "children": [
+        "P3731",
+        "P3732"
+      ],
+      "levels": [
+        5
+      ]
+    }
+  ]
+}

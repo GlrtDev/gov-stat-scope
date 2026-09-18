@@ -1,0 +1,112 @@
+{
+  "totalRecords": 10,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G446&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G446&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=G446&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "P3527",
+      "parentId": "G446",
+      "name": "Członkostwo w organizacjach",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2827",
+      "parentId": "G446",
+      "name": "Organizacje według formy prawnej i organizacyjnej",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P3528",
+      "parentId": "G446",
+      "name": "Organizacje według głównej dziedziny działalności",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2829",
+      "parentId": "G446",
+      "name": "Organizacje według klasy przychodów",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2828",
+      "parentId": "G446",
+      "name": "Organizacje według klasy zatrudnienia",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2844",
+      "parentId": "G446",
+      "name": "Organizacje według maksymalnego terytorialnego zasięgu głównej działalności",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2845",
+      "parentId": "G446",
+      "name": "Organizacje według rodzaju działalności",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2842",
+      "parentId": "G446",
+      "name": "Organizacje według rodzaju i udziału",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2843",
+      "parentId": "G446",
+      "name": "Organizacje według typu gminy",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "P2848",
+      "parentId": "G446",
+      "name": "Praca płatna w organizacjach",
+      "hasVariables": true,
+      "children": [],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}

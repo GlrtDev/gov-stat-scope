@@ -1,0 +1,94 @@
+{
+  "totalRecords": 5,
+  "page": 0,
+  "pageSize": 10,
+  "links": {
+    "first": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K15&page=0&page-size=10",
+    "self": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K15&page=0&page-size=10",
+    "last": "https://bdl.stat.gov.pl/api/v1/subjects?parent-id=K15&page=0&page-size=10"
+  },
+  "results": [
+    {
+      "id": "G186",
+      "parentId": "K15",
+      "name": "CENY W ROLNICTWIE",
+      "hasVariables": false,
+      "children": [
+        "P1458",
+        "P1459",
+        "P1460",
+        "P2967",
+        "P2968",
+        "P3155",
+        "P3156",
+        "P3183",
+        "P3415"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G188",
+      "parentId": "K15",
+      "name": "PRZECIĘTNE CENY DETALICZNE TOWARÓW I USŁUG KONSUMPCYJNYCH",
+      "hasVariables": false,
+      "children": [
+        "P1466",
+        "P1467",
+        "P1468",
+        "P1469",
+        "P1470",
+        "P1471",
+        "P1472",
+        "P1473",
+        "P2917"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G189",
+      "parentId": "K15",
+      "name": "PRZECIĘTNE CENY DETALICZNE TOWARÓW NIEKONSUMPCYJNYCH",
+      "hasVariables": false,
+      "children": [
+        "P1474"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G187",
+      "parentId": "K15",
+      "name": "PRZECIĘTNE CENY PRODUCENTÓW NIEKTÓRYCH WYROBÓW SPOŻYWCZYCH NA RYNKU KRAJOWYM",
+      "hasVariables": false,
+      "children": [
+        "P1461",
+        "P1462",
+        "P1463",
+        "P1464",
+        "P1465"
+      ],
+      "levels": [
+        3
+      ]
+    },
+    {
+      "id": "G405",
+      "parentId": "K15",
+      "name": "WSKAŹNIKI CEN",
+      "hasVariables": false,
+      "children": [
+        "P2496",
+        "P2955",
+        "P4635"
+      ],
+      "levels": [
+        3
+      ]
+    }
+  ]
+}
