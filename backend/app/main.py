@@ -123,18 +123,16 @@ logger.info(f"Request timeout configured: {REQUEST_TIMEOUT_SECONDS}s")
 app.add_middleware(TimeoutMiddleware, timeout=REQUEST_TIMEOUT_SECONDS)
 app.add_middleware(RequestContextMiddleware)
 
-# Secure CORS configuration supporting local development, AWS cloud previews, and production domains
-ALLOWED_ORIGIN_REGEXES = [
-    r"http://localhost(:\d+)?",
-    r"http://127\.0\.0\.1(:\d+)?",
-    r"https://.*\.amazonaws\.com",
-    r"https://(www\.)?govstatscope\.com",
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:8000").split(",")
+    if origin.strip()
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex="|".join(ALLOWED_ORIGIN_REGEXES),
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

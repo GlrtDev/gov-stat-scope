@@ -40,12 +40,17 @@ class GUSApiClient:
             base_url or os.getenv("GUS_API_BASE_URL") or DEFAULT_BASE_URL
         ).rstrip("/")
         self.api_key = api_key or os.getenv("GUS_API_KEY")
+        
+        # Ignore CI/local placeholder keys; fall back to unauthenticated requests.
+        if self.api_key in {"dummy_gus_key_for_local", "your_gus_key_here", "your-api-key-here", "changeme"}:
+            self.api_key = None
+
         headers = {
             "User-Agent": "GovScope-GUS-Adapter/1.0",
             "Accept": "application/json",
         }
         if self.api_key:
-            headers["api_key"] = self.api_key
+            headers["X-ClientId"] = self.api_key
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
             timeout=timeout,

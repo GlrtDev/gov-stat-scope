@@ -16,15 +16,24 @@ from app.models import AskRequest, AskResponse, DataSource
 from app.rate_limiter import limiter
 from app.workflow.graph import invoke_workflow
 from app.workflow.progress import register_progress_queue, unregister_progress_queue
-from app.services.llm_quota import LLMQuotaExceeded
+from app.services.llm_quota import DynamoDBLLMQuota, LLMQuotaExceeded
 
 router = APIRouter(prefix="/api/v1", tags=["Orchestration"])
 
+llm_quota = DynamoDBLLMQuota()
+
+def _client_scope(request: Request) -> str:
+    client_ip = request.client.host if request.client else "unknown"
+    return f"ip:{client_ip}"
 
 @router.post("/ask", response_model=AskResponse)
-@limiter.limit("30/minute")
+@limiter.limit("10/minute")
 async def ask(request: Request, payload: AskRequest) -> AskResponse:
-    """Accept a user query and execute the LangGraph orchestrator workflow."""
+    scope_id = _client_scope(request)
+    quota_check = await llm_quota.check_and_increment_async(scope_id)
+    if not quota_check["allowed"]:
+        raise LLMQuotaExceeded(limit=quota_check["limit"], used=quota_check["used"])
+
     session_id = payload.session_id or uuid.uuid4().hex
     set_session_id(session_id)
 
@@ -59,6 +68,7 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
 
 
 @router.post("/ask/stream")
+@limiter.limit("5/minute")
 async def ask_stream(request: Request, payload: AskRequest):
     """Stream progress events while executing the workflow via SSE."""
     session_id = payload.session_id or uuid.uuid4().hex

@@ -109,7 +109,7 @@ class OrchestratorState(BaseModel):
 class AskRequest(BaseModel):
     """Request body for POST /ask."""
 
-    message: str = Field(..., min_length=1, description="User message text")
+    message: str = Field(..., min_length=1, max_length=500, description="User message text")
     session_id: str | None = Field(
         default_factory=lambda: uuid.uuid4().hex,
         min_length=1,

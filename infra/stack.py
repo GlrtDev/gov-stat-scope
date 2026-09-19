@@ -34,6 +34,18 @@ class GovDataInfraStack(Stack):
             time_to_live_attribute="expires_at",
             removal_policy=RemovalPolicy.DESTROY,
         )
+
+        quota_table = dynamodb.Table(
+            self,
+            "LLMQuotaTable",
+            table_name="govdata-llm-quota",
+            partition_key=dynamodb.Attribute(name="pk", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="sk", type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            time_to_live_attribute="ttl",
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
         cache_table = dynamodb.Table(
             self,
             "GUSCacheTable",
@@ -55,6 +67,7 @@ class GovDataInfraStack(Stack):
             timeout=Duration.minutes(5),   # Your 3‑min limit
             environment={
                 "DYNAMODB_TABLE_NAME": session_table.table_name,
+                "DYNAMODB_QUOTA_TABLE": quota_table.table_name,
                 "GUS_CACHE_TABLE": cache_table.table_name,
                 "ENVIRONMENT": "production",
             },
@@ -69,6 +82,7 @@ class GovDataInfraStack(Stack):
         ))
         session_table.grant_read_write_data(backend_fn.role)
         cache_table.grant_read_write_data(backend_fn.role)
+        quota_table.grant_read_write_data(backend_fn.role)
 
         # Function URL – enables streaming responses
         fn_url = backend_fn.add_function_url(

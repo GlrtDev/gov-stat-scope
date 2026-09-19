@@ -20,19 +20,10 @@ class LLMQuotaExceeded(Exception):
     def __init__(self, limit: int, used: int) -> None:
         self.limit = limit
         self.used = used
-        retry_seconds = self._seconds_until_utc_midnight()
         super().__init__(
             f"Daily LLM limit of {limit} exceeded (used: {used}). "
-            f"Resets in {retry_seconds} seconds."
+            f"Resets at UTC midnight."
         )
-
-    @staticmethod
-    def _seconds_until_utc_midnight() -> int:
-        now = datetime.now(timezone.utc)
-        next_midnight = (now + timedelta(days=1)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        return max(int((next_midnight - now).total_seconds()), 1)
 
 
 class DynamoDBLLMQuota:
@@ -52,15 +43,16 @@ class DynamoDBLLMQuota:
         daily_limit: Optional[int] = None,
         endpoint_url: Optional[str] = None,
     ) -> None:
-        self.table_name = table_name or os.getenv("DYNAMODB_TABLE_NAME", "govdata-sessions")
+        self.table_name = table_name or os.getenv("DYNAMODB_QUOTA_TABLE", "govdata-llm-quota")
         self.daily_limit = daily_limit or int(os.getenv("LLM_DAILY_LIMIT", "100"))
         self.endpoint_url = endpoint_url or os.getenv("DYNAMODB_ENDPOINT")
         self.region = os.getenv("AWS_REGION", "us-east-1")
-        self._client = boto3.client(
+        self._resource = boto3.resource(
             "dynamodb",
             region_name=self.region,
             endpoint_url=self.endpoint_url,
         )
+        self._table = self._resource.Table(self.table_name)
 
     def _item_key(self, scope_id: str) -> dict[str, str]:
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -88,14 +80,16 @@ class DynamoDBLLMQuota:
         """
         key = self._item_key(scope_id)
         try:
-            response = self._client.update_item(
-                TableName=self.table_name,
+            response = self._table.update_item(
                 Key=key,
                 UpdateExpression=(
-                    "SET usage = if_not_exists(usage, :zero) + :inc, "
+                    "SET #usage = if_not_exists(#usage, :zero) + :inc, "
                     "#expiry = :ttl"
                 ),
-                ExpressionAttributeNames={"#expiry": "ttl"},
+                ExpressionAttributeNames={
+                    "#usage": "usage",
+                    "#expiry": "ttl",
+                },
                 ExpressionAttributeValues={
                     ":zero": 0,
                     ":inc": 1,
@@ -105,7 +99,7 @@ class DynamoDBLLMQuota:
             )
         except (ClientError, BotoCoreError) as exc:
             logger.error("DynamoDB quota increment failed: %s", exc)
-            # Fail-open: allow the request rather than blocking all traffic on storage errors
+            # Fail-open: allow the request rather than blocking traffic on storage errors
             return {
                 "allowed": True,
                 "used": 0,

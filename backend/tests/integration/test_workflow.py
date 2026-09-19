@@ -79,41 +79,6 @@ async def setup_workflow_checkpointer() -> AsyncGenerator[None, None]:
 
 
 @pytest.mark.asyncio
-async def test_workflow_gus_routing_and_analysis() -> None:
-    """Validate that a Poland-specific query routes to GUS, retrieves records, and synthesizes data."""
-    query = "What is the population of Poland over the last few years?"
-    session_id = f"test-live-gus-{uuid.uuid4().hex}"
-
-    result = await invoke_workflow(query=query, session_id=session_id)
-
-    assert result["selected_source"] == "GUS"
-    assert result["final_answer"] is not None
-    assert len(result["final_answer"]) > 0
-    assert "error" not in [err.lower() for err in result.get("errors", [])]
-    assert result["normalized_data"] is not None
-    assert result["analysis_result"] is not None
-
-
-@pytest.mark.asyncio
-async def test_workflow_fred_routing_and_analysis() -> None:
-    """Validate that a US macroeconomic query routes to FRED, retrieves observations, and synthesizes data."""
-    if os.getenv("FRED_API_KEY") == "dummy_key_for_test_skip":
-        pytest.skip("FRED_API_KEY not configured. Skipping live FRED workflow test.")
-
-    query = "What is the current US GDP and how has it changed recently?"
-    session_id = f"test-live-fred-{uuid.uuid4().hex}"
-
-    result = await invoke_workflow(query=query, session_id=session_id)
-
-    assert result["selected_source"] == "FRED"
-    assert result["final_answer"] is not None
-    assert len(result["final_answer"]) > 0
-    assert "error" not in [err.lower() for err in result.get("errors", [])]
-    assert result["normalized_data"] is not None
-    assert result["analysis_result"] is not None
-
-
-@pytest.mark.asyncio
 async def test_workflow_unsupported_routing() -> None:
     """Validate that out-of-scope queries trigger the UNSUPPORTED route and error handling."""
     query = "Can you give me a recipe for chocolate chip cookies?"

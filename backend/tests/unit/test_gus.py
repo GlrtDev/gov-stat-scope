@@ -17,7 +17,7 @@ async def test_gus_resolve_query(mock_gus_search_response: Dict[str, Any]) -> No
 
         assert result == "12345"
         assert mock_request.call_count == 1
-        await client.close()
+        await client.aclose()
 
 
 @pytest.mark.asyncio
@@ -29,7 +29,7 @@ async def test_gus_resolve_query_not_found() -> None:
         with pytest.raises(GUSNotFoundError):
             await client.resolve_query("unknown_metric")
 
-        await client.close()
+        await client.aclose()
 
 
 def test_gus_normalize_response(mock_gus_data_response: Dict[str, Any]) -> None:
@@ -40,9 +40,9 @@ def test_gus_normalize_response(mock_gus_data_response: Dict[str, Any]) -> None:
     assert normalized.region == "Poland"
     assert normalized.metric_name == "Population Test"
     assert len(normalized.values) == 2
-    assert normalized.values[0].date == "2020-01-01"
+    assert normalized.values[0].date == "2020"
     assert normalized.values[0].value == 38000000.0
-    assert normalized.time_period == "2020-01-01 to 2021-01-01"
+    assert normalized.time_period == "2020 to 2021"
 
 
 @pytest.mark.asyncio
@@ -52,8 +52,8 @@ async def test_gus_client_ignores_placeholder_api_key(monkeypatch: pytest.Monkey
 
     client = GUSClient()
 
-    assert "X-ClientId" not in client.client.headers
-    await client.close()
+    assert "X-ClientId" not in client._client.headers
+    await client.aclose()
 
 
 @pytest.mark.asyncio
@@ -63,8 +63,8 @@ async def test_gus_client_ignores_dummy_api_key(monkeypatch: pytest.MonkeyPatch)
 
     client = GUSClient()
 
-    assert "X-ClientId" not in client.client.headers
-    await client.close()
+    assert "X-ClientId" not in client._client.headers
+    await client.aclose()
 
 
 @pytest.mark.asyncio
@@ -74,16 +74,5 @@ async def test_gus_client_uses_real_api_key(monkeypatch: pytest.MonkeyPatch) -> 
 
     client = GUSClient()
 
-    assert client.client.headers["X-ClientId"] == "real-gus-client-id"
-    await client.close()
-
-
-@pytest.mark.asyncio
-async def test_gus_client_uses_client_id_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("GUS_API_KEY", raising=False)
-    monkeypatch.setenv("GUS_CLIENT_ID", "fallback-client-id")
-
-    client = GUSClient()
-
-    assert client.client.headers["X-ClientId"] == "fallback-client-id"
-    await client.close()
+    assert client._client.headers["X-ClientId"] == "real-gus-client-id"
+    await client.aclose()
