@@ -40,7 +40,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, placeho
         </label>
         <textarea
           id="govstat-query-input"
-          className="form-control shadow-sm rounded-4 px-3 py-3"
+          className="composer-textarea"
           rows={2}
           placeholder={placeholder}
           value={value}
@@ -52,16 +52,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, placeho
 
       <button
         type="submit"
-        className="btn btn-primary btn-lg px-4 rounded-4 shadow-sm align-self-end"
+        className="btn-brand"
         disabled={isLoading || !value.trim()}
       >
         {isLoading ? (
           <>
-            <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />
-            {t('chat.working')}
+            <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+            <span className="d-none d-sm-inline">{t('chat.working')}</span>
           </>
         ) : (
-          t('chat.send')
+          <span className="d-none d-sm-inline">{t('chat.send')}</span>
+        )}
+        {isLoading ? null : (
+          <span className="d-sm-none" aria-hidden="true">➤</span>
         )}
       </button>
     </form>

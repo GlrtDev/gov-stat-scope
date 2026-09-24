@@ -206,26 +206,26 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="app-shell d-flex flex-column min-vh-100">
-      <header className="app-header border-bottom py-3 px-3 px-md-4 sticky-top bg-white shadow-sm">
-        <div className="container-xl d-flex align-items-center justify-content-between gap-3">
-          <div className="d-flex align-items-center gap-3">
+    <div className="app-shell d-flex flex-column">
+      <header className="app-header py-3 px-3 px-md-4">
+        <div className="container-xl d-flex align-items-center justify-content-between gap-2 gap-md-3">
+          <div className="d-flex align-items-center gap-2 gap-md-3 min-w-0">
             <div className="brand-mark" aria-hidden="true">GS</div>
-            <div>
-              <h1 className="app-title mb-0 fw-bold text-body-emphasis">{t('app.title')}</h1>
-              <p className="mb-0 small text-secondary">{t('app.tagline')}</p>
+            <div className="min-w-0">
+              <h1 className="app-title mb-0 text-truncate">{t('app.title')}</h1>
+              <p className="app-tagline mb-0 d-none d-sm-block">{t('app.tagline')}</p>
             </div>
           </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2 flex-shrink-0">
             <LanguageSwitcher />
-            <span className="session-chip badge rounded-pill border-0 bg-light text-body-secondary fw-normal font-monospace">
+            <span className="session-chip d-none d-md-inline-flex">
               {t('app.session')} {sessionId.slice(0, 8)}
             </span>
           </div>
         </div>
       </header>
 
-      <main className="flex-grow-1 d-flex flex-column container-xl px-3 px-md-4 py-4 overflow-auto">
+      <main className="app-main flex-grow-1 d-flex flex-column container-xl px-3 px-md-4 py-4">
         {isLoading && (
           <div className="mb-3">
             <ProgressSteps
@@ -258,18 +258,12 @@ const AppContent: React.FC = () => {
         )}
 
         {messages.length === 0 ? (
-          <div className="empty-state my-auto text-center rounded-4 border border-dashed p-5 bg-white shadow-sm">
-            <h2 className="fw-bold mb-3">{t('empty.title')}</h2>
-            <p className="text-secondary mb-4">
-              {t('empty.subtitle')}
-            </p>
-            <div className="d-flex flex-column gap-2 align-items-center">
-              <span className="badge bg-primary-subtle text-dark border border-primary-subtle rounded-pill px-3 py-2 fw-normal">
-                {t('empty.example_gus')}
-              </span>
-              <span className="badge bg-success-subtle text-dark border border-success-subtle rounded-pill px-3 py-2 fw-normal">
-                {t('empty.example_fred')}
-              </span>
+          <div className="empty-state my-auto text-center p-4 p-md-5">
+            <h2 className="fw-semibold mb-3">{t('empty.title')}</h2>
+            <p className="text-secondary mb-4">{t('empty.subtitle')}</p>
+            <div className="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center justify-content-center">
+              <span className="example-chip example-chip--gus">{t('empty.example_gus')}</span>
+              <span className="example-chip example-chip--fred">{t('empty.example_fred')}</span>
             </div>
           </div>
         ) : (
@@ -282,7 +276,7 @@ const AppContent: React.FC = () => {
         )}
       </main>
 
-      <footer className="app-footer border-top py-3 px-3 px-md-4 bg-white">
+      <footer className="app-footer py-3 px-3 px-md-4">
         <div className="container-xl">
           <ChatInput
             onSend={handleSendMessage}

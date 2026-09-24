@@ -1,23 +1,35 @@
+// frontend/src/components/SourceBadge.tsx
 import React from 'react';
 
 interface SourceBadgeProps {
-  source: string;
+  source?: string;
+  isError?: boolean;
 }
 
-export const SourceBadge: React.FC<SourceBadgeProps> = ({ source }) => {
-  const normalizedSource = source.toUpperCase();
-  
-  let colorClasses = 'bg-gray-100 text-gray-800 border-gray-200';
-  
-  if (normalizedSource === 'GUS') {
-    colorClasses = 'bg-blue-100 text-blue-800 border-blue-200';
-  } else if (normalizedSource === 'FRED') {
-    colorClasses = 'bg-green-100 text-green-800 border-green-200';
+export const SourceBadge: React.FC<SourceBadgeProps> = ({ source, isError = false }) => {
+  if (isError) {
+    return <span className="source-badge source-badge--error">Error</span>;
   }
 
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colorClasses}`}>
-      {normalizedSource}
-    </span>
-  );
+  const normalizedSource = (source ?? '').trim().toUpperCase();
+
+  if (!normalizedSource || normalizedSource === 'UNSUPPORTED') {
+    return null;
+  }
+
+  const label =
+    normalizedSource === 'GUS'
+      ? 'GUS · PL'
+      : normalizedSource === 'FRED'
+        ? 'FRED · US'
+        : normalizedSource;
+
+  const variant =
+    normalizedSource === 'GUS'
+      ? 'source-badge--gus'
+      : normalizedSource === 'FRED'
+        ? 'source-badge--fred'
+        : 'source-badge--other';
+
+  return <span className={`source-badge ${variant}`}>{label}</span>;
 };

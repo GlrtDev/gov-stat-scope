@@ -10,37 +10,39 @@ export interface StepDefinition {
 
 type ProgressStepsProps = {
   steps: StepDefinition[];
-  currentStepId?: string; // id of the active step
+  currentStepId?: string;
   errorStepId?: string;
 };
 
 export const ProgressSteps: React.FC<ProgressStepsProps> = ({ steps, currentStepId, errorStepId }) => {
+  const activeIndex = steps.findIndex((step) => step.id === currentStepId);
+  const errorIndex = steps.findIndex((step) => step.id === errorStepId);
+  // Steps before the active (or error) step are considered completed
+  const completedBoundary = activeIndex !== -1 ? activeIndex : errorIndex;
+
   return (
-    <div className="d-flex flex-wrap gap-2 align-items-center">
-      {steps.map((step) => {
+    <div className="progress-steps" role="status" aria-live="polite">
+      {steps.map((step, index) => {
         const isActive = currentStepId === step.id;
         const isError = errorStepId === step.id;
         const status: StepStatus = isError
           ? 'error'
           : isActive
             ? 'active'
-            : 'completed'; // we can assume all steps before active are completed
-
-        const badgeColor = status === 'error'
-          ? 'bg-danger'
-          : status === 'active'
-            ? 'bg-warning text-dark'
-            : 'bg-success text-white';
-
-        const pulse = status === 'active' ? ' progress-step-pulse' : '';
+            : completedBoundary !== -1 && index < completedBoundary
+              ? 'completed'
+              : 'pending';
 
         return (
           <div
             key={step.id}
-            className={`px-3 py-2 rounded-3 border fw-semibold small ${badgeColor} ${pulse}`}
-            style={{ minWidth: '120px', textAlign: 'center' }}
+            className={`progress-step progress-step--${status}`}
+            aria-current={isActive ? 'step' : undefined}
           >
-            {step.label}
+            <span className="progress-step-index" aria-hidden="true">
+              {status === 'completed' ? '✓' : status === 'error' ? '!' : index + 1}
+            </span>
+            <span className="progress-step-label">{step.label}</span>
           </div>
         );
       })}
