@@ -7,8 +7,10 @@ import type { StepDefinition } from './components/ProgressSteps';
 import { streamAskOrchestrator, ApiError } from './api/client';
 import type { ProgressEvent } from './api/client';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { useKeyboardViewport } from './hooks/useKeyboardViewport';
 import type { TranslationKey } from './i18n/translations';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { APP_VERSION, BUILD_TIME_UTC } from './version';
 
 type Translate = (key: TranslationKey, params?: Record<string, string | number>) => string;
 
@@ -93,6 +95,7 @@ function extractFinalAnswer(event: unknown): string | null {
 
 const AppContent: React.FC = () => {
   const { t } = useLanguage();
+  useKeyboardViewport();
 
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -205,6 +208,11 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleExampleClick = (query: string) => {
+    if (isLoading) return;
+    void handleSendMessage(query);
+  };
+
   return (
     <div className="app-shell d-flex flex-column">
       <header className="app-header py-3 px-3 px-md-4">
@@ -262,8 +270,20 @@ const AppContent: React.FC = () => {
             <h2 className="fw-semibold mb-3">{t('empty.title')}</h2>
             <p className="text-secondary mb-4">{t('empty.subtitle')}</p>
             <div className="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center justify-content-center">
-              <span className="example-chip example-chip--gus">{t('empty.example_gus')}</span>
-              <span className="example-chip example-chip--fred">{t('empty.example_fred')}</span>
+              <button
+                type="button"
+                className="example-chip example-chip--gus"
+                onClick={() => handleExampleClick(t('empty.example_gus'))}
+              >
+                {t('empty.example_gus')}
+              </button>
+              <button
+                type="button"
+                className="example-chip example-chip--alt"
+                onClick={() => handleExampleClick(t('empty.example_unemployment'))}
+              >
+                {t('empty.example_unemployment')}
+              </button>
             </div>
           </div>
         ) : (
@@ -283,6 +303,10 @@ const AppContent: React.FC = () => {
             isLoading={isLoading}
             placeholder={t('chat.input_placeholder')}
           />
+          <p className="app-version mb-0 mt-2 text-center">
+            v{APP_VERSION}
+            {BUILD_TIME_UTC ? ` · built ${BUILD_TIME_UTC}` : ''}
+          </p>
         </div>
       </footer>
     </div>

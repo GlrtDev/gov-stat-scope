@@ -1,0 +1,115 @@
+/* frontend/src/styles/chat.css — conversation stream, bubbles, authors, source badges */
+.chat-stream {
+  max-width: 54rem;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.chat-row {
+  display: flex;
+  width: 100%;
+}
+
+.message-bubble {
+  max-width: min(78%, 42rem);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  overflow-wrap: anywhere;
+}
+
+.message-user {
+  background: var(--navy);
+  color: var(--paper);
+  border-color: var(--navy-deep);
+  border-radius: 14px 14px 4px 14px;
+}
+
+.message-assistant {
+  background: var(--paper-raised);
+  border-radius: 14px 14px 14px 4px;
+}
+
+.message-error {
+  background: var(--error-bg) !important;
+  border-color: var(--error-border) !important;
+  color: var(--error-ink);
+}
+
+.message-content {
+  white-space: pre-wrap;
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+/* ── Message author ───────────────────────────────────── */
+
+.message-author {
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.message-author--user {
+  color: rgba(244, 242, 236, 0.85);
+}
+
+.message-author--assistant,
+.message-author--error {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.message-author--assistant {
+  color: var(--ink-soft);
+}
+
+.message-author--error {
+  color: var(--error-ink);
+}
+
+/* ── Source badge ─────────────────────────────────────── */
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.source-badge--gus {
+  color: var(--navy-deep);
+  border-color: var(--navy);
+  background: rgba(30, 58, 79, 0.08);
+}
+
+.source-badge--fred {
+  color: var(--brass-ink);
+  border-color: var(--brass);
+  background: rgba(138, 100, 32, 0.08);
+}
+
+.source-badge--other {
+  color: var(--ink-soft);
+}
+
+.source-badge--error {
+  color: var(--error-ink);
+  border-color: var(--error-border);
+  background: var(--error-bg);
+}
+
+@media (max-width: 575.98px) {
+  .message-bubble {
+    max-width: 94%;
+  }
+}

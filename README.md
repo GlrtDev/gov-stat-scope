@@ -1,6 +1,6 @@
 # GovStatScope AI Orchestrator
 
-> **Public live deployment coming soon!**
+**[Public live deployment!](https://d1g1h19kh4uixv.cloudfront.net/)**
 
 GovStatScope is a stateful multi-agent orchestration platform built to query, normalize, and synthesize government statistical data. It leverages an autonomous AI workflow to route natural language queries to the appropriate statistical agency (GUS BDL for Poland, FRED for the US), construct accurate API requests, and perform comparative data analysis.
 

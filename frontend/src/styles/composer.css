@@ -1,0 +1,108 @@
+/* frontend/src/styles/composer.css — input area + primary button */
+.chat-composer {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chat-composer:focus-within {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(30, 58, 79, 0.12);
+}
+
+.composer-textarea {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  font-size: 16px; /* prevents iOS zoom-on-focus */
+  line-height: 1.5;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0.5rem;
+  min-height: 48px;
+  max-height: 40vh;
+  resize: none;
+}
+
+.composer-textarea:focus {
+  outline: none;
+  box-shadow: none !important;
+}
+
+.composer-textarea:disabled {
+  opacity: 0.6;
+}
+
+.composer-textarea::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.85;
+}
+
+/* ── Primary action button ────────────────────────────── */
+
+.btn-brand {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--navy-deep);
+  background: var(--navy);
+  color: var(--paper);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.55rem 1.15rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+  align-self: flex-end;
+}
+
+.btn-brand:hover:not(:disabled) {
+  background: var(--navy-deep);
+}
+
+.btn-brand:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-brand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-brand:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+/* ── Bootstrap btn-link recolor (progress "show all") ── */
+
+.btn-link {
+  color: var(--brass-ink);
+}
+
+.btn-link:hover {
+  color: var(--brass);
+}
+
+.btn-link:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+@media (max-width: 575.98px) {
+  .chat-composer {
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  .btn-brand {
+    padding: 0.55rem 0.8rem;
+  }
+}

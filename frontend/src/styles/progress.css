@@ -1,0 +1,90 @@
+/* frontend/src/styles/progress.css */
+.progress-log-line {
+  line-height: 1.5;
+}
+
+.progress-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.35rem 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper-raised);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.progress-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.7rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+
+.progress-step--active {
+  background: var(--navy);
+  border-color: var(--navy-deep);
+  color: var(--paper);
+  animation: step-pulse 1.8s ease-in-out infinite;
+}
+
+.progress-step--active .progress-step-index {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--paper);
+}
+
+.progress-step--completed {
+  color: var(--navy-deep);
+}
+
+.progress-step--completed .progress-step-index {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--paper);
+}
+
+.progress-step--error {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error-ink);
+}
+
+.progress-step--error .progress-step-index {
+  background: var(--error-ink);
+  border-color: var(--error-ink);
+  color: var(--paper);
+}
+
+@keyframes step-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(30, 58, 79, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(30, 58, 79, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-step--active {
+    animation: none;
+  }
+}

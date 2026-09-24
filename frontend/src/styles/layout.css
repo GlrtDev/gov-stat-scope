@@ -1,0 +1,101 @@
+/* frontend/src/styles/layout.css — app shell, masthead, main, footer */
+.app-shell {
+  min-height: 100vh;
+  min-height: calc(100dvh - var(--keyboard-inset, 0px));
+}
+
+/* ── Masthead ─────────────────────────────────────────── */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background: rgba(253, 252, 248, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--navy-deep);
+  padding-top: env(safe-area-inset-top);
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--navy-deep);
+  color: var(--paper);
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  border: 1px solid #0e1f2d;
+  box-shadow: inset 0 0 0 1px rgba(244, 242, 236, 0.14);
+}
+
+.app-title {
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-size: clamp(1.05rem, 1.05rem + 0.4vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.app-tagline {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.session-chip {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.25rem 0.85rem;
+}
+
+/* ── Main / footer ────────────────────────────────────── */
+
+.app-main {
+  flex: 1 0 auto;
+}
+
+.app-footer {
+  position: sticky;
+  bottom: var(--keyboard-inset, 0px);
+  z-index: 1030;
+  background: rgba(244, 242, 236, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--rule);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (max-width: 575.98px) {
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    font-size: 0.95rem;
+  }
+}
+
+.app-version {
+  margin-top: 0.55rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  text-align: center;
+  opacity: 0.8;
+  user-select: text;
+}

@@ -52,5 +52,5 @@ npx aws-cdk deploy
 
 # Deploy frontend to S3
 ```
-.\scripts\run_backend.ps1
+.\scripts\deploy_frontend.ps1
 ```

@@ -27,6 +27,27 @@ $frontendDir = Join-Path $PSScriptRoot '..\frontend'
 $distDir     = Join-Path $frontendDir 'dist'
 
 Write-Host '==> Building frontend...' -ForegroundColor Cyan
+
+# ── Version stamp (injected into the bundle via Vite env vars) ──
+$prevEap = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    $gitSha = (& git rev-parse --short HEAD 2>$null)
+} catch {
+    $gitSha = $null
+}
+$ErrorActionPreference = $prevEap
+
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($gitSha)) {
+    Write-Warning 'git rev-parse failed; falling back to timestamp-only version.'
+    $gitSha = 'nogit'
+}
+
+$buildTimeUtc = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+$env:VITE_APP_VERSION = "sha-$gitSha"
+$env:VITE_BUILD_TIME  = $buildTimeUtc
+Write-Host "    version: $env:VITE_APP_VERSION (built $buildTimeUtc)" -ForegroundColor DarkGray
+
 Push-Location $frontendDir
 try {
     npm run build
@@ -34,6 +55,9 @@ try {
 }
 finally {
     Pop-Location
+    # Do not leak build env vars into subsequent steps
+    Remove-Item Env:\VITE_APP_VERSION -ErrorAction SilentlyContinue
+    Remove-Item Env:\VITE_BUILD_TIME  -ErrorAction SilentlyContinue
 }
 
 if (-not (Test-Path $distDir)) {

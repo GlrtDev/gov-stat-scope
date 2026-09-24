@@ -1,0 +1,88 @@
+/* frontend/src/styles/components.css — empty state, example chips, language switcher */
+.empty-state {
+  max-width: 42rem;
+  width: 100%;
+  margin-inline: auto;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.empty-state h2 {
+  font-family: 'IBM Plex Serif', Georgia, serif;
+}
+
+/* ── Example chips ────────────────────────────────────── */
+
+.example-chip {
+  appearance: none;
+  display: inline-block;
+  max-width: 100%;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.78rem;
+  padding: 0.5rem 0.95rem;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.example-chip:hover {
+  border-color: var(--navy);
+  background: var(--paper-raised);
+}
+
+.example-chip:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.example-chip--gus {
+  border-left: 3px solid var(--navy);
+}
+
+.example-chip--alt {
+  border-left: 3px solid var(--brass);
+}
+
+/* ── Language switcher ────────────────────────────────── */
+
+.language-switcher {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper-raised);
+  overflow: hidden;
+}
+
+.language-option {
+  appearance: none;
+  border: none;
+  border-left: 1px solid var(--rule);
+  background: transparent;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.language-option:first-child {
+  border-left: none;
+}
+
+.language-option--active {
+  background: var(--navy);
+  color: var(--paper);
+}
+
+.language-option:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: -2px;
+}

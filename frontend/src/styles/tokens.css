@@ -1,0 +1,26 @@
+/* frontend/src/styles/tokens.css */
+:root {
+  /* GovStatScope tokens — "official gazette" palette */
+  --paper: #f4f2ec;          /* warm ivory page background */
+  --paper-raised: #fdfcf8;   /* cards, assistant bubbles, composer */
+  --ink: #1c2732;            /* primary text */
+  --ink-soft: #5b6570;       /* secondary text */
+  --navy: #1e3a4f;           /* user bubbles, focus rings */
+  --navy-deep: #152a3b;      /* brand mark, masthead rule */
+  --brass: #8a6420;          /* decorative accent */
+  --brass-ink: #6f5014;      /* accent safe for text on paper */
+  --rule: #d9d3c5;           /* hairline borders */
+  --error-ink: #96352c;
+  --error-bg: #f7ebe8;
+  --error-border: #dfbfb7;
+
+  /* Align Bootstrap 5.3 CSS vars with the palette */
+  --bs-body-bg: var(--paper);
+  --bs-body-color: var(--ink);
+  --bs-border-color: var(--rule);
+  --bs-secondary-rgb: 91, 101, 112;
+  --bs-emphasis-color-rgb: 28, 39, 50;
+  --bs-link-color: var(--brass-ink);
+  --bs-link-hover-color: var(--brass);
+  --bs-font-sans-serif: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
