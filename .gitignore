@@ -204,3 +204,4 @@ deploy-outputs.json
 converse.json
 openapi.json
 payload.json
+scripts/deploy_frontend.config.json

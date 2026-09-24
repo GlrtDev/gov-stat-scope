@@ -1,0 +1,5 @@
+{
+  "bucketName": "my-frontend-bucket",
+  "distributionId": "E0000000000000",
+  "awsProfile": "my-aws-profile"
+}
