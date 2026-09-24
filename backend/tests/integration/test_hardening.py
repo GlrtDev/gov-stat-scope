@@ -30,7 +30,7 @@ def _problem_json(res: Any) -> dict[str, Any]:
 def setup_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mock external dependencies to isolate routing and middleware tests."""
     monkeypatch.setenv("DYNAMODB_TABLE_NAME", "govdata-sessions-test")
-    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "eu-north-1")
     monkeypatch.setenv("DYNAMODB_ENDPOINT", "http://localhost:8000")
     monkeypatch.setenv("LLM_PROVIDER", "openai")
 

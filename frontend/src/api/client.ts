@@ -143,9 +143,13 @@ export async function streamAskOrchestrator(
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {
+      buffer += decoder.decode();
+      if (!buffer.includes('\n\n')) break;
+    } else {
+      buffer += decoder.decode(value, { stream: true }).replace(/\r/g, '');
+    }
 
-    buffer += decoder.decode(value, { stream: true });
     const parts = buffer.split('\n\n');
     buffer = parts.pop() || '';
 
@@ -158,7 +162,6 @@ export async function streamAskOrchestrator(
       } else if (parsed.eventType === 'progress') {
         callbacks.onProgress?.(parsed);
       } else if (parsed.eventType === 'done') {
-        // final result
         const result = parsed.final as AskResponse;
         callbacks.onDone?.(result);
         return result;

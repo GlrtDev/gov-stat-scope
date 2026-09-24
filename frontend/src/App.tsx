@@ -22,33 +22,36 @@ function getWorkflowSteps(t: Translate): StepDefinition[] {
 }
 
 function formatEventStatus(event: ProgressEvent, t: Translate): string {
+  const toText = (value: unknown, fallback: string): string =>
+    typeof value === 'string' && value.length > 0 ? value : fallback;
+
   switch (event.type) {
     case 'route_selected':
-      return t('progress.route_selected', { source: event.source ?? '?' });
+      return t('progress.route_selected', { source: toText(event.source, '?') });
     case 'gus_search_started':
       return t('progress.gus_search_started');
     case 'subject_selected':
       return t('progress.subject_selected', {
-        level: event.level ?? '?',
-        name: event.name ?? '?',
+        level: toText(event.level, '?'),
+        name: toText(event.name, '?'),
       });
     case 'variable_selected':
-      return t('progress.variable_selected', { name: event.name ?? '?' });
+      return t('progress.variable_selected', { name: toText(event.name, '?') });
     case 'data_fetched': {
-      const [start, end] = event.years ?? [];
+      const [start, end] = Array.isArray(event.years) ? event.years.map(String) : [];
       return t('progress.data_fetched', { start: start ?? '?', end: end ?? '?' });
     }
     case 'fred_started':
       return t('progress.fred_started');
     case 'fred_completed':
-      return t('progress.fred_completed', { series_id: event.series_id ?? '?' });
+      return t('progress.fred_completed', { series_id: toText(event.series_id, '?') });
     case 'analyst_started':
       return t('progress.analyst_started');
     case 'analyst_completed':
       return t('progress.analyst_completed');
     case 'error':
       return t('progress.error', {
-        message: event.message || t('progress.unknown_error'),
+        message: toText(event.message, t('progress.unknown_error')),
       });
     default:
       return t('progress.working');

@@ -43,3 +43,24 @@ python bdl_swagger_client.py call "/aggregates/{id}" --param id=1
 python bdl_swagger_client.py interactive
 python bdl_swagger_client.py interactive --api-key "1233456-1111-4444-9999-00000000000"
 ```
+
+# Deploy
+```
+npx aws-cdk bootstrap --profile govstat
+npx aws-cdk deploy --profile govstat --require-approval broadening
+```
+
+```
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Replace <bucket-name> with the output value from CDK
+aws s3 sync frontend/dist s3://<bucket-name> --profile govstat
+```
+
+
+```
+cdk destroy --profile govstat
+```

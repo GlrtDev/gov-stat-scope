@@ -46,7 +46,7 @@ class DynamoDBLLMQuota:
         self.table_name = table_name or os.getenv("DYNAMODB_QUOTA_TABLE", "govdata-llm-quota")
         self.daily_limit = daily_limit or int(os.getenv("LLM_DAILY_LIMIT", "100"))
         self.endpoint_url = endpoint_url or os.getenv("DYNAMODB_ENDPOINT")
-        self.region = os.getenv("AWS_REGION", "us-east-1")
+        self.region = os.getenv("AWS_REGION", "eu-north-1")
         self._resource = boto3.resource(
             "dynamodb",
             region_name=self.region,
@@ -99,12 +99,12 @@ class DynamoDBLLMQuota:
             )
         except (ClientError, BotoCoreError) as exc:
             logger.error("DynamoDB quota increment failed: %s", exc)
-            # Fail-open: allow the request rather than blocking traffic on storage errors
+            # Fail-CLOSED: block rather than allow unbounded Bedrock spend during an outage
             return {
-                "allowed": True,
-                "used": 0,
+                "allowed": False,
+                "used": -1,
                 "limit": self.daily_limit,
-                "remaining": self.daily_limit,
+                "remaining": 0,
             }
 
         used = int(response.get("Attributes", {}).get("usage", 0))

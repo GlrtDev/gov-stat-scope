@@ -25,7 +25,7 @@ async def liveness_probe() -> dict[str, str]:
 @router.get("/ready")
 async def readiness_probe() -> JSONResponse:
     """Deep readiness probe asserting thread-pooled connectivity to AWS dependencies."""
-    region_name = os.getenv("AWS_REGION", "us-east-1")
+    region_name = os.getenv("AWS_REGION", "eu-north-1")
     table_name = os.getenv("DYNAMODB_TABLE_NAME", "govdata-sessions")
     endpoint_url = os.getenv("DYNAMODB_ENDPOINT")
 

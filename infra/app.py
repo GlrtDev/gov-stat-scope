@@ -12,7 +12,7 @@ GovDataInfraStack(
     "GovDataInfraStack",
     env=cdk.Environment(
         account=os.environ.get("CDK_DEFAULT_ACCOUNT"),
-        region=os.environ.get("CDK_DEFAULT_REGION", "us-east-1"),
+        region=os.environ.get("CDK_DEFAULT_REGION", "eu-north-1"),
     ),
 )
 

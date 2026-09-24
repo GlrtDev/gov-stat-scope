@@ -20,7 +20,7 @@ def _get_client(region_name: str, endpoint_url: Optional[str]) -> Any:
 async def load_session_context(
     table_name: str,
     session_id: str,
-    region_name: str = "us-east-1",
+    region_name: str = "eu-north-1",
     endpoint_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Load the persisted context dict for a session (empty dict if none)."""
@@ -51,7 +51,7 @@ async def save_session_context(
     table_name: str,
     session_id: str,
     context: Dict[str, Any],
-    region_name: str = "us-east-1",
+    region_name: str = "eu-north-1",
     endpoint_url: Optional[str] = None,
 ) -> None:
     """Persist the context dict for a session, overwriting any previous value."""

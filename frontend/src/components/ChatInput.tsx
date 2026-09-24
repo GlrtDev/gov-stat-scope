@@ -1,12 +1,15 @@
-import React, { FormEvent, KeyboardEvent, useState } from 'react';
+import React, { useState } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 type ChatInputProps = {
   onSend: (query: string) => void | Promise<void>;
   isLoading: boolean;
+  placeholder?: string;
 };
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
+
+export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, placeholder }) => {
   const { t } = useLanguage();
   const [value, setValue] = useState<string>('');
 
@@ -39,7 +42,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
           id="govstat-query-input"
           className="form-control shadow-sm rounded-4 px-3 py-3"
           rows={2}
-          placeholder={t('chat.input_placeholder')}
+          placeholder={placeholder}
           value={value}
           disabled={isLoading}
           onChange={(event) => setValue(event.target.value)}

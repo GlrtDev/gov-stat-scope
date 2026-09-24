@@ -46,7 +46,7 @@ pytestmark = pytest.mark.skipif(
 def setup_test_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Configure environment variables for DynamoDB Local and local LLM execution."""
     monkeypatch.setenv("DYNAMODB_TABLE_NAME", TABLE_NAME)
-    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "eu-north-1")
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "dummy")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "dummy")
     monkeypatch.setenv("DYNAMODB_ENDPOINT", DYNAMODB_ENDPOINT)
@@ -61,12 +61,12 @@ async def ddb_saver() -> AsyncGenerator[DynamoDBSaver, None]:
     """Ensure the target DynamoDB table exists, yield saver, and patch global graph checkpointer."""
     await init_dynamodb_tables(
         table_name=TABLE_NAME,
-        region_name="us-east-1",
+        region_name="eu-north-1",
         endpoint_url=DYNAMODB_ENDPOINT,
     )
     saver = DynamoDBSaver(
         table_name=TABLE_NAME,
-        region_name="us-east-1",
+        region_name="eu-north-1",
         endpoint_url=DYNAMODB_ENDPOINT,
     )
     
@@ -124,7 +124,7 @@ async def test_dynamodb_multi_turn_memory(ddb_saver: DynamoDBSaver) -> None:
     turn1_msg_count = len(turn1_res.get("messages", []))
     assert turn1_msg_count > 0
 
-    dynamodb = boto3.client("dynamodb", endpoint_url=DYNAMODB_ENDPOINT, region_name="us-east-1")
+    dynamodb = boto3.client("dynamodb", endpoint_url=DYNAMODB_ENDPOINT, region_name="eu-north-1")
     db_items = dynamodb.query(
         TableName=TABLE_NAME,
         KeyConditionExpression="session_id = :sid",

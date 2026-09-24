@@ -16,7 +16,7 @@ CACHE_TABLE = os.getenv("GUS_CACHE_TABLE", "govstat-gus-cache")
 
 def _make_client() -> Any:
     kwargs: Dict[str, Any] = {
-        "region_name": "us-east-1",
+        "region_name": "eu-north-1",
     }
     if DYNAMODB_ENDPOINT:
         # Use dummy creds + clear session token for DynamoDB Local/LocalStack.
@@ -63,7 +63,7 @@ async def ensure_dynamodb_tables() -> AsyncGenerator[None, None]:
     # Sessions/checkpoint table: composite key used by DynamoDBSaver
     await init_dynamodb_tables(
         table_name=SESSION_TABLE,
-        region_name="us-east-1",
+        region_name="eu-north-1",
         endpoint_url=DYNAMODB_ENDPOINT,
     )
 

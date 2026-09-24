@@ -32,7 +32,7 @@ def _get_client(
         region_name
         or os.getenv("AWS_REGION")
         or os.getenv("AWS_DEFAULT_REGION")
-        or "us-east-1"
+        or "eu-north-1"
     )
     key = (resolved_region, resolved_endpoint)
     client = _client_cache.get(key)

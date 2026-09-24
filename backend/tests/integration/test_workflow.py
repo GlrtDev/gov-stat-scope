@@ -58,13 +58,13 @@ async def setup_workflow_checkpointer() -> AsyncGenerator[None, None]:
     """Ensure the sessions table exists and route the global graph checkpointer to it."""
     await init_dynamodb_tables(
         table_name=TABLE_NAME,
-        region_name="us-east-1",
+        region_name="eu-north-1",
         endpoint_url=DYNAMODB_ENDPOINT,
     )
 
     saver = DynamoDBSaver(
         table_name=TABLE_NAME,
-        region_name="us-east-1",
+        region_name="eu-north-1",
         endpoint_url=DYNAMODB_ENDPOINT,
     )
 

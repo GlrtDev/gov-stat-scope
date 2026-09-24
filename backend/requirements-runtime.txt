@@ -1,0 +1,14 @@
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0,<3.0.0
+pydantic-settings>=2.0.0
+httpx>=0.25.0
+tenacity>=8.2.0
+slowapi>=0.1.9
+
+# LLM & Orchestration
+langgraph
+langchain-aws
+
+# AWS SDK (DynamoDB state, quota, cache — async + sync clients)
+boto3>=1.34.0

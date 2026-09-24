@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError as BotoClientError
 from app.services.llm_quota import DynamoDBLLMQuota, LLMQuotaExceeded
 
 ENDPOINT_URL = os.getenv("DYNAMODB_ENDPOINT", "http://localhost:8000")
-REGION = os.getenv("AWS_REGION", "us-east-1")
+REGION = os.getenv("AWS_REGION", "eu-north-1")
 TABLE_NAME = "test-llm-quota"
 
 

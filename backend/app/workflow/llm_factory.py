@@ -4,26 +4,33 @@ from typing import Any
 from langchain_core.language_models.chat_models import BaseChatModel
 
 
+
 def get_llm(temperature: float = 0.0) -> BaseChatModel:
     """
     Instantiates the LLM based on environment configuration.
-    Defaults to Amazon Bedrock (Claude Haiku) if no provider is specified.
-    
+    Defaults to Amazon Bedrock (Nova Lite via EU inference profile).
+
     Environment Variables:
     - LLM_PROVIDER: 'bedrock', 'openai', 'openrouter', or 'gemini'
-    - LLM_MODEL: Model identifier string
+    - BEDROCK_MODEL_ID: Bedrock model / inference-profile ID (preferred)
+    - LLM_MODEL: Generic model identifier override
     - OPENAI_API_KEY: Required for openai/openrouter
     - OPENAI_API_BASE: Required for openrouter (e.g., https://openrouter.ai/api/v1)
     - GOOGLE_API_KEY: Required for gemini
     """
     provider = os.getenv("LLM_PROVIDER", "bedrock").lower()
-    model_name = os.getenv("LLM_MODEL", "anthropic.claude-3-haiku-20240307-v1:0")
+    model_name = (
+        os.getenv("BEDROCK_MODEL_ID")
+        or os.getenv("LLM_MODEL")
+        or DEFAULT_BEDROCK_MODEL_ID
+    )
 
     if provider == "bedrock":
-        from langchain_aws import ChatBedrock
-        return ChatBedrock(
-            model_id=model_name,
-            model_kwargs={"temperature": temperature},
+        from langchain_aws import ChatBedrockConverse
+        return ChatBedrockConverse(
+            model=model_name,
+            temperature=temperature,
+            region_name=os.getenv("AWS_REGION", "eu-north-1"),
         )
         
     elif provider in ("openai", "openrouter"):

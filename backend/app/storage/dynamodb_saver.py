@@ -6,7 +6,7 @@ import os
 import pickle
 import time
 from typing import Any, AsyncIterator, Dict, Iterable, List, Optional, Sequence, Tuple
-
+import logging
 import boto3
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import (
@@ -16,6 +16,8 @@ from langgraph.checkpoint.base import (
     CheckpointTuple,
 )
 from starlette.concurrency import run_in_threadpool
+
+logger = logging.getLogger(__name__)
 
 def _dynamodb_client(region_name: str, endpoint_url: Optional[str]) -> Any:
     """Create a DynamoDB client.
@@ -36,7 +38,7 @@ def _dynamodb_client(region_name: str, endpoint_url: Optional[str]) -> Any:
 class DynamoDBSaver(BaseCheckpointSaver):
     """Asynchronous DynamoDB Checkpoint Saver supporting custom endpoints for testing."""
 
-    def __init__(self, table_name: str, region_name: str = "us-east-1", endpoint_url: Optional[str] = None) -> None:
+    def __init__(self, table_name: str, region_name: str = "eu-north-1", endpoint_url: Optional[str] = None) -> None:
         super().__init__()
         self.table_name = table_name
         self.region_name = region_name
@@ -172,13 +174,26 @@ class DynamoDBSaver(BaseCheckpointSaver):
             )
 
 
-async def init_dynamodb_tables(table_name: str, region_name: str = "us-east-1", endpoint_url: Optional[str] = None) -> None:
+async def init_dynamodb_tables(table_name: str, region_name: str = "eu-north-1", endpoint_url: Optional[str] = None) -> None:
     """Idempotently creates the DynamoDB sessions table and configures the TTL policy."""
     resolved_endpoint = endpoint_url or os.getenv("DYNAMODB_ENDPOINT")
 
     def _sync_init() -> None:
         client = _dynamodb_client(region_name, resolved_endpoint)
         try:
+            try:
+                client.describe_table(TableName=table_name)
+                logger.info("DynamoDB table '%s' already provisioned (IaC) — skipping create.", table_name)
+                return
+            except client.exceptions.ResourceNotFoundException:
+                pass
+
+            if os.getenv("ENVIRONMENT") == "production":
+                raise RuntimeError(
+                    f"DynamoDB table '{table_name}' is not provisioned. "
+                    "Create it via IaC (CDK) — the runtime role intentionally lacks dynamodb:CreateTable."
+                )
+
             client.create_table(
                 TableName=table_name,
                 KeySchema=[{"AttributeName": "session_id", "KeyType": "HASH"}, {"AttributeName": "checkpoint_id", "KeyType": "RANGE"}],

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class AsyncSecretsClient:
     """Asynchronous client for AWS Secrets Manager using standard boto3 in thread pools."""
 
-    def __init__(self, region_name: str = "us-east-1") -> None:
+    def __init__(self, region_name: str = "eu-north-1") -> None:
         self.region_name = region_name
         self._cache: Dict[str, Dict[str, Any]] = {}
 

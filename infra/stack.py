@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from aws_cdk import (
+    BundlingOptions,
     CfnOutput,
     Duration,
     RemovalPolicy,
@@ -14,6 +15,7 @@ from aws_cdk import (
     aws_s3 as s3,
 )
 from constructs import Construct
+from urllib.parse import urlparse
 
 BACKEND_DIR = os.path.join(os.path.dirname(__file__), "..", "backend")
 
@@ -28,10 +30,11 @@ class GovDataInfraStack(Stack):
         session_table = dynamodb.Table(
             self,
             "GovDataSessionsTable",
-            table_name="govdata-sessions",
+            table_name="govdata-sessions-v2",
             partition_key=dynamodb.Attribute(name="session_id", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="checkpoint_id", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            time_to_live_attribute="expires_at",
+            time_to_live_attribute="ttl",
             removal_policy=RemovalPolicy.DESTROY,
         )
 
@@ -61,35 +64,65 @@ class GovDataInfraStack(Stack):
             self,
             "GovDataBackendFunction",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="app.handler",
-            code=lambda_.Code.from_asset(BACKEND_DIR),
-            memory_size=512,
-            timeout=Duration.minutes(5),   # Your 3‑min limit
+            # Web Adapter wraps uvicorn; run.sh starts the ASGI server
+            handler="run.sh",
+            layers=[
+                lambda_.LayerVersion.from_layer_version_arn(
+                    self,
+                    "LambdaWebAdapterLayer",
+                    f"arn:aws:lambda:{Stack.of(self).region}:753240598075:layer:LambdaAdapterLayerX86:30",
+                )
+            ],
+            code=lambda_.Code.from_asset(
+                BACKEND_DIR,
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_12.bundling_image,
+                    command=[
+                        "bash", "-c",
+                        "mkdir -p /asset-output && "
+                        "cp -r app /asset-output/ && "
+                        "cp requirements-runtime.txt /asset-output/requirements.txt && "
+                        "cp run.sh /asset-output/run.sh && "
+                        "sed -i 's/\r$//' /asset-output/run.sh && "
+                        "chmod +x /asset-output/run.sh && "
+                        "pip install -r requirements-runtime.txt -t /asset-output"
+                    ],
+                ),
+            ),
+            memory_size=1024,
+            timeout=Duration.minutes(5),
             environment={
                 "DYNAMODB_TABLE_NAME": session_table.table_name,
                 "DYNAMODB_QUOTA_TABLE": quota_table.table_name,
                 "GUS_CACHE_TABLE": cache_table.table_name,
                 "ENVIRONMENT": "production",
+                "GUS_API_KEY": os.getenv("GUS_API_KEY", ""),
+                "FRED_API_KEY": os.getenv("FRED_API_KEY", ""),
+                "BEDROCK_ENABLED": os.getenv("BEDROCK_ENABLED", "false"),
+                "BEDROCK_MODEL_ID": os.getenv("BEDROCK_MODEL_ID", "eu.amazon.nova-lite-v1:0"),
+                "LLM_MODEL": os.getenv("BEDROCK_MODEL_ID", "eu.amazon.nova-lite-v1:0"),
+                "AWS_LAMBDA_EXEC_WRAPPER": "/opt/bootstrap",
+                "AWS_LWA_INVOKE_MODE": "response_stream",
             },
         )
         backend_fn.add_to_role_policy(iam.PolicyStatement(
             actions=["bedrock:InvokeModel"],
-            resources=["arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"],
-        ))
-        backend_fn.add_to_role_policy(iam.PolicyStatement(
-            actions=["secretsmanager:GetSecretValue"],
-            resources=["arn:aws:secretsmanager:*:*:secret:govdata/*"],
+            resources=[
+                f"arn:aws:bedrock:*:{self.account}:inference-profile/eu.amazon.nova-lite-v1:0",
+                "arn:aws:bedrock:*::foundation-model/amazon.nova-lite-v1:0",
+            ],
         ))
         session_table.grant_read_write_data(backend_fn.role)
         cache_table.grant_read_write_data(backend_fn.role)
         quota_table.grant_read_write_data(backend_fn.role)
 
-        # Function URL – enables streaming responses
+        # Function URL – RESPONSE_STREAM enables true SSE streaming
         fn_url = backend_fn.add_function_url(
-            auth_type=lambda_.FunctionUrlAuthType.NONE,  # CloudFront will be the only public entry
+            auth_type=lambda_.FunctionUrlAuthType.NONE,
+            invoke_mode=lambda_.InvokeMode.RESPONSE_STREAM,
             cors=lambda_.FunctionUrlCorsOptions(
-                allowed_origins=["*"],  # tighten later via CloudFront
-                allowed_methods=["*"],
+                allowed_origins=["*"],
+                allowed_methods=[lambda_.HttpMethod.ALL],
                 allowed_headers=["*"],
             ),
         )
@@ -115,20 +148,32 @@ class GovDataInfraStack(Stack):
             # API routes → Lambda Function URL (no buffering for streaming)
             additional_behaviors={
                 "/api/*": cloudfront.BehaviorOptions(
-                    origin=origins.HttpOrigin(fn_url.domain_name),
+                    origin=origins.FunctionUrlOrigin(
+                        fn_url,
+                        read_timeout=Duration.seconds(60),
+                    ),
                     viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                     cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
                     allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
-                    origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER,
+                    origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
                 )
             },
             error_responses=[
-                cloudfront.ErrorResponse(404, response_http_status=200, response_page_path="/index.html"),
-                cloudfront.ErrorResponse(403, response_http_status=200, response_page_path="/index.html"),
+                cloudfront.ErrorResponse(
+                    http_status=404,
+                    response_http_status=200,
+                    response_page_path="/index.html",
+                ),
+                cloudfront.ErrorResponse(
+                    http_status=403,
+                    response_http_status=200,
+                    response_page_path="/index.html",
+                ),
             ],
         )
 
         CfnOutput(self, "DynamoDBTableName", value=session_table.table_name)
         CfnOutput(self, "FrontendBucketName", value=frontend_bucket.bucket_name)
         CfnOutput(self, "CloudFrontDomainName", value=distribution.distribution_domain_name)
+        CfnOutput(self, "CloudFrontDistributionId", value=distribution.distribution_id)
         CfnOutput(self, "FunctionUrl", value=fn_url.url)

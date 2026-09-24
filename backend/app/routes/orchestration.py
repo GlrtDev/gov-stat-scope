@@ -72,10 +72,11 @@ async def ask(request: Request, payload: AskRequest) -> AskResponse:
 async def ask_stream(request: Request, payload: AskRequest):
     """Stream progress events while executing the workflow via SSE."""
     session_id = payload.session_id or uuid.uuid4().hex
-    set_session_id(session_id)  # propagate to bedrock_client for quota
+    set_session_id(session_id)
     queue = register_progress_queue(session_id)
 
     async def event_generator():
+        idle_polls = 0
         try:
             task = asyncio.create_task(
                 invoke_workflow(
@@ -89,12 +90,19 @@ async def ask_stream(request: Request, payload: AskRequest):
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=0.5)
+                    idle_polls = 0
                 except asyncio.TimeoutError:
+                    idle_polls += 1
                     if task.done():
                         try:
                             result = task.result()
                         except LLMQuotaExceeded as exc:
                             yield f"event: error\ndata: {json.dumps({'error': str(exc)})}\n\n"
+                            yield ": stream-end\n\n"
+                            break
+                        except Exception as e:
+                            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+                            yield ": stream-end\n\n"
                             break
                         safe_payload = {
                             "session_id": session_id,
@@ -104,7 +112,16 @@ async def ask_stream(request: Request, payload: AskRequest):
                             "analysis_result": result.get("analysis_result"),
                         }
                         yield f"event: done\ndata: {json.dumps({'final': safe_payload})}\n\n"
+                        # Trailing SSE comment forces CloudFront to flush the
+                        # final bytes before the stream closes.
+                        yield ": stream-end\n\n"
                         break
+                    # SSE comment frames are ignored by the parser but keep
+                    # bytes flowing so CloudFront's 60s origin read timeout
+                    # never fires during silent workflow phases.
+                    if idle_polls >= 20:
+                        yield ": keepalive\n\n"
+                        idle_polls = 0
                     continue
                 yield f"event: progress\ndata: {json.dumps(event)}\n\n"
         except Exception as e:
@@ -112,7 +129,14 @@ async def ask_stream(request: Request, payload: AskRequest):
         finally:
             unregister_progress_queue(session_id)
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 def _normalize_selected_source(value: Any) -> DataSource | str:

@@ -19,6 +19,7 @@ wheels/
 share/python-wheels/
 *.egg
 MANIFEST
+cdk.out/
 
 # Unit test / coverage
 .pytest_cache/
@@ -199,3 +200,7 @@ CLAUDE.md
 # Local DynamoDB SQLite data files
 infra/dynamodb-data/
 *.db
+deploy-outputs.json
+converse.json
+openapi.json
+payload.json

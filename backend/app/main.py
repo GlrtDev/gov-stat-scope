@@ -10,7 +10,8 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 import httpx
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -27,49 +28,63 @@ from app.storage.dynamodb_saver import init_dynamodb_tables
 configure_logging()
 logger = logging.getLogger(__name__)
 
-class TimeoutMiddleware(BaseHTTPMiddleware):
-    """Enforce a global request timeout to prevent hanging connections."""
+class TimeoutMiddleware:
+    """Pure ASGI timeout: no BaseHTTPMiddleware (buffers SSE frames).
+    Streaming endpoints are exempt — the Lambda timeout (300s) governs them."""
 
-    def __init__(self, app: FastAPI, timeout: int = 30) -> None:
-        super().__init__(app)
+    EXEMPT_PATHS: tuple[str, ...] = ("/api/v1/ask/stream",)
+
+    def __init__(self, app: ASGIApp, timeout: int = 120) -> None:
+        self.app = app
         self.timeout = timeout
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or scope.get("path", "") in self.EXEMPT_PATHS:
+            await self.app(scope, receive, send)
+            return
+
+        response_started = False
+
+        async def send_wrapper(message: Message) -> None:
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
         try:
             async with asyncio.timeout(self.timeout):
-                return await call_next(request)
-        except asyncio.TimeoutError:
-            return JSONResponse(
+                await self.app(scope, receive, send_wrapper)
+        except TimeoutError:
+            if response_started:
+                raise
+            response = JSONResponse(
                 status_code=408,
                 content={
                     "type": "urn:govdata:error:timeout",
                     "title": "Request Timeout",
                     "status": 408,
                     "detail": f"The server timed out waiting for the request to complete after {self.timeout} seconds.",
-                    "instance": str(request.url),
+                    "instance": scope.get("path", ""),
                 },
                 media_type="application/problem+json",
             )
+            await response(scope, receive, send)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifecycle manager handling resource initialization and graceful shutdown."""
-    region_name = os.getenv("AWS_REGION", "us-east-1")
+    region_name = os.getenv("AWS_REGION", "eu-north-1")
     app.state.http_client = httpx.AsyncClient()
 
-    if os.getenv("ENVIRONMENT") == "production":
-        logger.info("Production environment detected. Fetching secrets from AWS Secrets Manager.")
-        secrets_client = AsyncSecretsClient(region_name=region_name)
-        try:
-            gus_secret = await secrets_client.get_secret("govdata/gus-api-key")
-            fred_secret = await secrets_client.get_secret("govdata/fred-api-key")
-            for key, value in {**gus_secret, **fred_secret}.items():
-                os.environ[key] = str(value)
-            logger.info("Successfully injected production API keys from Secrets Manager.")
-        except Exception as e:
-            logger.critical(f"Failed to load required secrets from AWS: {e}")
-            raise
+    # API keys are optional: GUS BDL works unauthenticated and FRED-backed
+    # queries degrade at request time via the workflow's error handling.
+    missing_keys = [key for key in ("GUS_API_KEY", "FRED_API_KEY") if not os.getenv(key)]
+    if missing_keys:
+        logger.warning(
+            "Optional data-source API keys not set: %s. Related adapters will fail per-request.",
+            ", ".join(missing_keys),
+        )
 
     table_name = os.getenv("DYNAMODB_TABLE_NAME", "govdata-sessions")
     await init_dynamodb_tables(table_name=table_name, region_name=region_name)
